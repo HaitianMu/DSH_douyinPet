@@ -1,0 +1,38 @@
+{
+  "guardianName": "监护人",
+  "familyMembers": [
+    "测试姑姑 | 合成示例昵称 | 喜欢摄影"
+  ],
+  "personaPrompt": "说话简短，保留自己的好奇；不了解就先核实。",
+  "sources": {
+    "feed": false,
+    "search": true,
+    "following": true,
+    "hot": false,
+    "users": false
+  },
+  "keywords": [
+    "摄影",
+    "手工"
+  ],
+  "userUrls": [],
+  "perDay": 5,
+  "scanLimit": 30,
+  "dailyAt": "",
+  "onStart": false,
+  "peakValley": false,
+  "favOn": false,
+  "autoComment": false,
+  "mentionName": "",
+  "commentAtEnabled": false,
+  "outboxMode": "review",
+  "dailyCommentQuota": 0,
+  "dmEnabled": false,
+  "dmWhitelist": [],
+  "dmDailyQuota": 0,
+  "groupEnabled": false,
+  "groupWhitelist": [],
+  "groupDailyQuota": 0,
+  "useOcr": true,
+  "useVision": false
+}

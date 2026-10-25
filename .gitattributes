@@ -1,0 +1,6 @@
+# Normalize source text; keep Windows installers in CRLF.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.png binary
+*.zip binary
+*.tgz binary

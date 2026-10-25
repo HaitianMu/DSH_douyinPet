@@ -1,0 +1,95 @@
+{
+  "name": "dsh-douyin-scroll",
+  "version": "2.0.0",
+  "description": "独立成长的抖音大肥鱼：本地 RAG 记忆、日记、人格迭代与可审核的视频分享",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "douyin",
+    "抖音",
+    "duty",
+    "rag",
+    "memory"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TianmuTan/dsh-douyin.git"
+  },
+  "homepage": "https://github.com/TianmuTan/dsh-douyin#readme",
+  "bugs": {
+    "url": "https://github.com/TianmuTan/dsh-douyin/issues"
+  },
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "lib",
+    "prompts",
+    "tools/memory.mjs",
+    "tools/selftest.mjs",
+    "tools/check.mjs",
+    "test",
+    "examples",
+    "README.md",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "INSTALL-怎么装.md",
+    "怎么发布到 GitHub.md",
+    "LICENSE",
+    "NOTICE.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "docs/architecture.md",
+    "docs/memory.md",
+    "docs/running.md"
+  ],
+  "scripts": {
+    "test": "node --test test/self.test.mjs test/mcp.test.mjs test/host.test.mjs",
+    "check": "node tools/check.mjs"
+  },
+  "engines": {
+    "dsh": ">=0.1.7-rc.1",
+    "node": ">=22.16.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "*",
+    "@deepseek-ai/schemastery": "*"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-tools": {
+      "optional": true
+    },
+    "@deepseek-ai/schemastery": {
+      "optional": true
+    }
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-plugins"
+      ]
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
