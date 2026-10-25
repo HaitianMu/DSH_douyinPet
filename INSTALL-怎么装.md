@@ -12,7 +12,7 @@ dsh plugin --profile desktop add link:F:\GitProgramManager\dsh-douyin
 
 重启 DSH 后，在「设置 → 刷抖音」配置、登录。浏览器自检会真实连接抖音，需要你主动点击。基础文本模型由 headless profile 配置；OCR 默认启用，视觉模型需单独配置兼容 API。
 
-从源码仓库直接安装也可以：`dsh plugin --profile desktop add github:TianmuTan/dsh-douyin`。两种安装方式选一种，profile 换成实际名称。
+从源码仓库直接安装也可以：`dsh plugin --profile desktop add github:HaitianMu/DSH_douyinPet`。两种安装方式选一种，profile 换成实际名称。
 
 默认不开启定时、自动收藏或自动发言。先用逐条审核，检查生成的日报、草稿和独立记忆。需要每天回顾时设置每日固定时间，并保持 DSH 运行。
 

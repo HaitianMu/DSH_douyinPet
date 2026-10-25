@@ -2,7 +2,7 @@
 
 本项目是 DSH 插件，需要在 DSH 中运行。`node index.js` 不会启动设置页或值班任务；`tools/memory.mjs` 只用于本地查看、反馈和维护记忆。
 
-源码仓库：[TianmuTan/dsh-douyin](https://github.com/TianmuTan/dsh-douyin)。当前源码版本为 2.0.0，基于上游 1.4.14，尚未发布 npm 软件包。
+源码仓库：[HaitianMu/DSH_douyinPet](https://github.com/HaitianMu/DSH_douyinPet)。当前源码版本为 2.0.0，基于上游 1.4.14，尚未发布 npm 软件包。
 
 ## 1. 准备环境
 
@@ -35,15 +35,15 @@ dsh plugin --profile desktop add link:F:\GitProgramManager\dsh-douyin
 其他机器可以先克隆，再安装本地目录：
 
 ```powershell
-git clone https://github.com/TianmuTan/dsh-douyin.git
-Set-Location -LiteralPath '.\dsh-douyin'
+git clone https://github.com/HaitianMu/DSH_douyinPet.git
+Set-Location -LiteralPath '.\DSH_douyinPet'
 dsh plugin --profile desktop add "link:$((Get-Location).Path)"
 ```
 
 也可以直接从 GitHub 安装：
 
 ```powershell
-dsh plugin --profile desktop add github:TianmuTan/dsh-douyin
+dsh plugin --profile desktop add github:HaitianMu/DSH_douyinPet
 ```
 
 三种方式选一种即可。`desktop` 要换成你实际使用的宿主 profile，网页版通常使用 `web`。如果 PowerShell 找不到 `dsh`，使用 DSH 提供的命令行环境或其实际 `dsh.cmd` 完整路径执行安装命令。

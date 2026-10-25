@@ -1,8 +1,8 @@
-# 抖音大肥鱼 · dsh-douyin-scroll
+# 抖音大肥鱼 · DSH_douyinPet
 
 一个有独立记忆、可逐步调整人格的 DSH 抖音插件。基于 Xia28zhi 的 dsh-douyin-scroll 1.4.14 扩展，沿用 MIT 许可证；当前源码版本为 2.0.0，尚未发布 npm 软件包。
 
-[运行指南](docs/running.md) · [源码仓库](https://github.com/TianmuTan/dsh-douyin) · [工作流程](docs/architecture.md)
+[运行指南](docs/running.md) · [源码仓库](https://github.com/HaitianMu/DSH_douyinPet) · [工作流程](docs/architecture.md)
 
 抖音鱼和 B 站鱼分别成长：不导入 B 站人设、日记、亲戚、账号或运行文件。两边可以使用同一种基础模型，各自保存经历与人格。
 
