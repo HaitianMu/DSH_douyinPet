@@ -34,11 +34,17 @@ test('MCP stdio serves memory and persists diaries without touching a browser', 
     assert.ok((await rpc('initialize')).result.capabilities.tools)
     const list = (await rpc('tools/list')).result.tools
     assert.ok(list.some((t) => t.name === 'douyin_memory_search'))
+    for (const name of ['douyin_contacts', 'douyin_inbox', 'douyin_social_draft', 'douyin_diary_publish']) assert.ok(list.some((t) => t.name === name))
+    assert.equal((await call('douyin_contacts')).ok, false)
+    assert.equal((await call('douyin_inbox')).ok, false)
+    assert.match((await call('douyin_diary_publish')).error.message, /未开启/)
     const draftSchema = list.find((t) => t.name === 'douyin_draft').inputSchema
     assert.ok(draftSchema.required.includes('ticket')); assert.ok(!draftSchema.required.includes('target'))
     const failed = await call('douyin_pick', { id: '123', reason: '没有人格 ticket' })
     assert.match(failed.error.message, /先调用/)
     const ctx = await call('douyin_self_context', { purpose: 'diary' })
+    const draftContext = await call('douyin_self_context', { purpose: 'draft' })
+    assert.match((await call('douyin_draft', { kind: 'reply', text: '不得绕过', ticket: draftContext.ticket })).error, /只接受|专用起草/)
     const written = await call('douyin_diary_write', { day: '2026-10-01', experiences: '今天认识了木工榫卯，记录自己的好奇。', ticket: ctx.ticket })
     assert.equal(written.source, 'diary:2026-10-01@1')
     const found = await call('douyin_memory_search', { query: '榫卯' })

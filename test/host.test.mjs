@@ -37,6 +37,26 @@ test('host memory/settings API works in an isolated runtime without a browser', 
     return { status, data }
   }
   const token = (await api('/token')).data.token
+  const defaults = (await api('/config')).data.cfg
+  assert.equal(defaults.videoWatchSeconds, 30); assert.equal(defaults.requestIntervalSeconds, 10)
+  assert.equal(defaults.proactiveEnabled, false); assert.equal(defaults.autoReplyEnabled, false)
+  assert.equal(defaults.diaryEnabled, false); assert.equal(defaults.diaryPublishEnabled, false)
+  for (const path of ['/social/run', '/diary/run']) {
+    assert.equal((await api(path, { method: 'POST' })).status, 403)
+    assert.equal((await api(path, { method: 'POST', token })).data.started, false)
+  }
+  const invalidSocial = (await api('/config', { method: 'POST', token, body: {
+    socialContacts: ['* | https://www.douyin.com/user/xxx'], inboxIntervalMinutes: 1, diaryAt: '25:00', replyDailyQuota: 51,
+  } })).data
+  for (const key of ['socialContacts', 'inboxIntervalMinutes', 'diaryAt', 'replyDailyQuota']) assert.ok(invalidSocial.rejected.includes(key))
+  const socialSettings = (await api('/config', { method: 'POST', token, body: {
+    socialContacts: ['合成好友 | https://www.douyin.com/user/synthetic-peer'], diaryAt: '20:30', replyDailyQuota: 0,
+  } })).data
+  assert.equal(socialSettings.rejected.length, 0); assert.equal(socialSettings.cfg.replyDailyQuota, 0)
+  const tooFast = (await api('/config', { method: 'POST', token, body: { videoWatchSeconds: 5, requestIntervalSeconds: 1 } })).data
+  assert.ok(tooFast.rejected.includes('videoWatchSeconds')); assert.ok(tooFast.rejected.includes('requestIntervalSeconds'))
+  const slower = (await api('/config', { method: 'POST', token, body: { videoWatchSeconds: 60, requestIntervalSeconds: 20 } })).data
+  assert.equal(slower.cfg.videoWatchSeconds, 60); assert.equal(slower.cfg.requestIntervalSeconds, 20)
   const initial = (await api('/self')).data
   assert.equal(initial.stats.platform, 'douyin'); assert.equal(initial.persona.revision, 1)
   assert.equal(existsSync(join(home, 'browser')), false)

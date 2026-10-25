@@ -32,7 +32,8 @@ window.__ModuleLoader__.load({
     const asJson = async (res) => {
       if (res.ok) return res.json()
       const why = res.status === 401 ? '（未登录 / 没权限）' : res.status === 403 ? '（被宿主拦了）' : ''
-      throw new Error('HTTP ' + res.status + why)
+      const detail = await res.json().catch(() => ({}))
+      throw new Error(detail.error || ('HTTP ' + res.status + why))
     }
     const jget = async (p) => asJson(await fetch(API + p, { credentials: 'same-origin' }))
     // ⭐ 加固后：改状态的 POST 必须带 x-douyin-token（同源 GET /token 换，缓存住）
@@ -186,7 +187,11 @@ window.__ModuleLoader__.load({
       const [entry, setEntry] = useState(null)
       const [feedback, setFeedback] = useState('')
       const [familyDraft, setFamilyDraft] = useState('')
+      const [contactsDraft, setContactsDraft] = useState('')
+      const contactsDirty = useRef(false)
       const [polling, setPolling] = useState(false)
+      const [homeDraft, setHomeDraft] = useState('')
+      const homeDirty = useRef(false)
       // ⭐ 文字类先攒着，点「保存改动」一起写（照 bili 的习惯）
       const [draft, setDraft] = useState({ kws: '', persona: '', urls: '' })
       const [dirty, setDirty] = useState(false)
@@ -211,6 +216,8 @@ window.__ModuleLoader__.load({
           const c = await jget('/config')
           setCfg(c.cfg)
           fillDraft(c.cfg)
+          if (!contactsDirty.current) setContactsDraft((c.cfg.socialContacts || []).join('\n'))
+          if (!homeDirty.current) setHomeDraft(c.home || '')
           const s = await jget('/status')
           setSt(s)
           try { setOutbox(await jget('/outbox')) } catch { /* 待发件箱读不到就先不显示 */ }
@@ -224,8 +231,10 @@ window.__ModuleLoader__.load({
         try {
           const r = await jpost('/config', p)
           if (r.cfg) { setCfg(r.cfg); fillDraft(r.cfg) }
+          if (r.ok === false || r.rejected?.length) throw new Error(r.error || ('以下设置未保存：' + r.rejected.join('、') + '，请检查格式或范围'))
           if (label) say(label + '：已保存', 'ok')
-        } catch (e) { say('保存失败：' + e.message, 'err'); load() }
+          return r
+        } catch (e) { say('保存失败：' + e.message, 'err'); load(); return null }
       }, [load, fillDraft])
 
       const patchSrc = useCallback(async (k, v) => {
@@ -244,11 +253,25 @@ window.__ModuleLoader__.load({
         try {
           const kws = String(draft.kws || '').split(/[\/,，、;；\s\n]+/).map((s) => s.trim()).filter(Boolean)
           const urls = String(draft.urls || '').split(/[\s,，;；]+/).map((s) => s.trim()).filter(Boolean)
-          await patch({ keywords: kws, personaPrompt: String(draft.persona || ''), userUrls: urls })
+          if (!await patch({ keywords: kws, personaPrompt: String(draft.persona || ''), userUrls: urls })) return
           setDirty(false)
           dirtyRef.current = false
           say('已保存：关键词 ' + kws.length + ' 个、人设 ' + (String(draft.persona || '').trim() ? '有' : '留空') + '、博主 ' + urls.length + ' 个', 'ok')
         } catch (e) { say('保存失败：' + e.message, 'err') } finally { setBusy('') }
+      }
+
+      const onMoveHome = async () => {
+        setBusy('home')
+        try {
+          const r = await jpost('/home', { home: homeDraft.trim() })
+          homeDirty.current = false
+          setHomeDraft(r.home)
+          setSt((s) => ({ ...s, home: r.home }))
+          setReport(null); setLogTail(null); setTest(null)
+          setSelf(null); setFound([]); setEntry(null)
+          await load()
+          say(r.changed ? `已使用新家目录：${r.home}。旧目录保留为备份：${r.previousHome}` : '当前已经使用这个家目录', 'ok')
+        } catch (e) { say(e.message, 'err') } finally { setBusy('') }
       }
 
       // ── 登录：开窗口 → 轮询 ──
@@ -256,28 +279,53 @@ window.__ModuleLoader__.load({
         setBusy('login')
         try {
           const r = await jpost('/login/start', {})
+          if (!r.ok) throw new Error(r.error || '登录窗口未能打开')
           say(r.hint || '浏览器窗口已打开', '')
           setPolling(true)
         } catch (e) { say('开登录窗口失败：' + e.message, 'err') } finally { setBusy('') }
       }
 
+      const onCancelLogin = async () => {
+        setBusy('login-cancel')
+        try {
+          await jpost('/login/cancel', {})
+          setPolling(false)
+          say('已结束登录等待，需要时可重新点击「登录抖音」', '')
+        } catch (e) { say(e.message, 'err') } finally { setBusy('') }
+      }
+
       useEffect(() => {
         if (!polling) return
-        let n = 0
-        const t = setInterval(async () => {
-          n++
-          if (!alive.current) { setPolling(false); return }
-          if (n > 120) { setPolling(false); say('等太久了，刷新页面再试一次', 'err'); return }
+        let cancelled = false
+        let timer
+        const deadline = Date.now() + 5 * 60_000
+        const poll = async () => {
+          if (cancelled || !alive.current) return
+          if (Date.now() > deadline) {
+            setPolling(false)
+            say('登录等待已超时，请重新点击「登录抖音」', 'err')
+            return
+          }
           try {
             const r = await jget('/login/poll')
+            if (cancelled || !alive.current) return
             if (r.state === 'ok') {
               setPolling(false)
               say('登录成功：' + (r.who || ''), 'ok')
               load()
+              return
             }
-          } catch { /* 下一跳再试 */ }
-        }, 2000)
-        return () => clearInterval(t)
+            if (['idle', 'closed', 'expired'].includes(r.state)) {
+              setPolling(false)
+              say(r.error || '登录等待已结束，请重新点击「登录抖音」', 'err')
+              return
+            }
+            if (r.error) say('登录检查：' + r.error, 'err')
+          } catch (e) { if (!cancelled && alive.current) say('登录检查失败：' + e.message, 'err') }
+          if (!cancelled && alive.current) timer = setTimeout(poll, 2000)
+        }
+        timer = setTimeout(poll, 2000)
+        return () => { cancelled = true; clearTimeout(timer) }
       }, [polling, load])
 
       // ── 动作 ──
@@ -287,6 +335,20 @@ window.__ModuleLoader__.load({
           const r = await jpost('/run', {})
           say(r.started ? '已开跑 —— 过几分钟回来看报告' : ('没跑起来：' + (r.error || '')), r.started ? 'ok' : 'err')
         } catch (e) { say(e.message, 'err') } finally { setBusy('') }
+      }
+      const onSocialRun = async (kind) => {
+        setBusy(kind)
+        try {
+          const r = await jpost(kind === 'diary' ? '/diary/run' : '/social/run', {})
+          say(r.started ? (kind === 'diary' ? '已开始写今天的日常；公开文案按发送方式进入待发件箱' : '已开始检查新来信；首次只建立基线，回复按发送方式处理') : (r.error || '暂未启动'), r.started ? 'ok' : 'err')
+        } catch (e) { say(e.message, 'err') } finally { setBusy('') }
+      }
+      const saveContacts = async () => {
+        setBusy('contacts')
+        try {
+          const r = await patch({ socialContacts: contactsDraft.split(/\r?\n/).map((x) => x.trim()).filter(Boolean) }, '互动名单')
+          if (r) { contactsDirty.current = false; setContactsDraft(r.cfg.socialContacts.join('\n')) }
+        } finally { setBusy('') }
       }
 
       const onTest = async () => {
@@ -369,7 +431,7 @@ window.__ModuleLoader__.load({
       const head = [
         h('div', { 'data-dd-row': '', key: 'badge' },
           h(Badge, {}, `今天已挑 ${st.pickedToday ?? 0}/${cfg.perDay ?? 0} 条`),
-          h(Badge, {}, st.loggedIn ? '抖音已登录' : '抖音未登录'),
+          h(Badge, {}, st.loginUnknown ? '登录状态待空闲时检查' : st.loggedIn ? '抖音已登录' : '抖音未登录'),
           h(Badge, {}, '浏览器 ' + (cfg.browserMode || 'auto')),
           h(Badge, {}, st.peakNow ? '现在是高峰' : '现在是谷时'),
           h(Badge, {}, 'v' + (st.version || '?')),
@@ -399,12 +461,13 @@ window.__ModuleLoader__.load({
       const daily = [
         h(Sec, { title: '账号', key: 'acc' }, [
           h('div', { 'data-dd-row': '', key: 'row' },
-            h(Btn, { primary: true, disabled: busy === 'login' || polling, onClick: onLogin }, polling ? '等你扫码…' : '登录抖音'),
+            h(Btn, { primary: true, disabled: !!busy || polling, onClick: onLogin }, polling ? '等你扫码…' : '登录抖音'),
+            polling ? h(Btn, { disabled: !!busy, onClick: onCancelLogin }, '结束等待') : null,
             h('div', { 'data-dd-note': '' }, st.loggedIn ? `已登录：${st.who || '（不知道是谁）'}` : '点一下会开一个浏览器窗口，在里面扫码（登完自动变绿）')),
           h('div', { 'data-dd-note': '', key: 'note' }, '登录态存在插件自己的浏览器 profile 里，跟你平常那个浏览器互不干扰，重启也在。'),
           h(Row, {
             key: 'mode', label: '浏览器窗口',
-            note: 'hidden = 窗口最小化，减少打扰；headless = 无窗口；visible = 显示窗口',
+            note: 'hidden = 窗口最小化；headless = 无窗口；visible = 显示窗口。扫码期间保持可见，模式改动在结束等待后使用。',
           }, h('div', { 'data-dd-row': '' },
             ...['auto', 'hidden', 'headless', 'visible'].map((m) => h(Btn, {
               key: m, primary: (cfg.browserMode || 'auto') === m, onClick: () => patch({ browserMode: m }),
@@ -473,7 +536,11 @@ window.__ModuleLoader__.load({
         h(Sec, { title: '怎么判', key: 'judge' }, [
           h(Row, { key: 'perday', label: '每天最多挑几条', note: '挑满就收工 —— 宁缺毋滥' },
             h(Num, { value: cfg.perDay, min: 1, max: 20, onChange: (v) => patch({ perDay: v }) })),
-          h(Row, { key: 'frames', label: '每条截几帧', note: '截帧要真播一遍视频，越多越慢越花钱' },
+          h(Row, { key: 'watch', label: '每条至少停留（秒）', note: '正常播放后取样，默认 30 秒，可调慢到 120 秒；遇到验证立即停止' },
+            h(Num, { value: cfg.videoWatchSeconds ?? 30, min: 30, max: 120, onChange: (v) => patch({ videoWatchSeconds: v }) })),
+          h(Row, { key: 'interval', label: '内容请求间隔（秒）', note: '默认 10 秒，可调慢到 60 秒；每次最多取 3 条，减少连续请求' },
+            h(Num, { value: cfg.requestIntervalSeconds ?? 10, min: 10, max: 60, onChange: (v) => patch({ requestIntervalSeconds: v }) })),
+          h(Row, { key: 'frames', label: '每条截几帧', note: '正常播放中定时截取，不拖动进度条；帧数越多，画面识别越花钱' },
             h(Num, { value: cfg.framesPerVideo, min: 1, max: 6, onChange: (v) => patch({ framesPerVideo: v }) })),
           h(Row, { key: 'ocr', label: '画面文字（OCR）', note: 'Windows 自带，零依赖。抖音没字幕，画面里的字常常就是全部信息' },
             h(Sw, { on: !!cfg.useOcr, onChange: (v) => patch({ useOcr: v }) })),
@@ -520,6 +587,32 @@ window.__ModuleLoader__.load({
 
       // ═══════════════════════════════ 互动 ═══════════════════════════════
       const social = [
+        h(Sec, { title: '互关互动与来信', key: 'contacts' }, [
+          h('div', { key: 'note', 'data-dd-note': '' }, '只处理你填写且能核验为互关的对象，最多20人。每行：精确昵称 | 完整抖音主页链接。首次检查仅建立消息基线，不回复历史聊天。此适配仅做过离线验证，页面无法确认对象时会停止。'),
+          h(Area, { key: 'list', rows: 4, value: contactsDraft, placeholder: '好友昵称 | https://www.douyin.com/user/SEC_UID', onChange: (v) => { contactsDirty.current = true; setContactsDraft(v) } }),
+          h(Btn, { key: 'save', disabled: !!busy, onClick: saveContacts }, '保存互动名单'),
+          h(Row, { key: 'proactive', label: '看完视频后主动互动', note: '结合已看内容和兴趣写简短文字；每人每天最多一次，不保证每轮都要发' },
+            h(Sw, { on: !!cfg.proactiveEnabled, onChange: (v) => patch({ proactiveEnabled: v }) })),
+          h(Row, { key: 'proactiveQuota', label: '每天最多主动互动几次' },
+            h(Num, { value: cfg.proactiveDailyQuota ?? 1, min: 0, max: 50, onChange: (v) => patch({ proactiveDailyQuota: v }) })),
+          h(Row, { key: 'reply', label: '检查新来信并起草回复', note: '只回复名单内新文字消息；发送前再次检查账号、互关和对话是否已更新' },
+            h(Sw, { on: !!cfg.autoReplyEnabled, onChange: (v) => patch({ autoReplyEnabled: v }) })),
+          h(Row, { key: 'replyQuota', label: '每天最多回复几次' },
+            h(Num, { value: cfg.replyDailyQuota ?? 5, min: 0, max: 50, onChange: (v) => patch({ replyDailyQuota: v }) })),
+          h(Row, { key: 'inboxInterval', label: '消息检查间隔（分钟）', note: '每轮最多检查3人，轮流检查名单；DSH运行时生效' },
+            h(Num, { value: cfg.inboxIntervalMinutes ?? 10, min: 10, max: 120, onChange: (v) => patch({ inboxIntervalMinutes: v }) })),
+          h(Btn, { key: 'check', disabled: !!busy || !cfg.autoReplyEnabled || contactsDirty.current, onClick: () => onSocialRun('social') }, '立即检查消息'),
+        ]),
+        h(Sec, { title: '每日日常与抖音图文', key: 'diary' }, [
+          h(Row, { key: 'enabled', label: '每天写日常', note: '按北京时间当天真实经历写日记；没有活动就如实记录，私人正文保存在本地' },
+            h(Sw, { on: !!cfg.diaryEnabled, onChange: (v) => patch({ diaryEnabled: v }) })),
+          h(Row, { key: 'at', label: '写日常时间（北京时间）', note: 'DSH需要运行；错过时间会补跑，失败至少隔30分钟再尝试' },
+            h('input', { 'data-dd-input': '', type: 'time', value: cfg.diaryAt || '21:00', onChange: (e) => { if (e.target.value) patch({ diaryAt: e.target.value }) } })),
+          h(Row, { key: 'publish', label: '允许发布日常到抖音', note: '仅将最多280字的公开文案生成文字图卡。发送方式选「自动发」后才自动发布；逐条审核时先进入待发件箱。不会上传私人日记或聊天。' },
+            h(Sw, { on: !!cfg.diaryPublishEnabled, onChange: (v) => patch({ diaryPublishEnabled: v }) })),
+          h('div', { key: 'limit', 'data-dd-note': '' }, '每日最多发布一次；结果不明时不重发。图文上传适配仅做过离线测试，真实页面结构不匹配会停止并记录原因。图卡为本地文字排版，未接入AI生图。'),
+          h(Btn, { key: 'write', disabled: !!busy || !cfg.diaryEnabled, onClick: () => onSocialRun('diary') }, '现在写日常'),
+        ]),
         h(Sec, { title: '评论人设', key: 'persona' }, [
           h('div', { 'data-dd-note': '', key: 'n1' },
             '写草稿、评论、以及日报里「它自己的一句话」时按这个说话。只接受本项目的简短文字指导，最多1000字。她的人格另存于独立记忆库，不读取其他项目的人设文件。'),
@@ -586,7 +679,7 @@ window.__ModuleLoader__.load({
             ...ARR(outbox?.items).map((o) => h('div', { 'data-dd-row': '', key: o.id },
               h('div', { 'data-dd-grow': '' },
                 h('div', { 'data-dd-label': '' },
-                  `${o.kind === 'comment' ? '评论' : o.kind === 'dm' ? '私聊' : '群'}${o.target ? ' → ' + o.target : ''} · ${o.status || ''}`),
+                  `${({ comment: '评论', dm: '视频私聊', group: '群分享', message: '主动互动', reply: '来信回复', diary: '日常图文' })[o.kind] || o.kind}${o.target ? ' → ' + o.target : ''}${o.diaryDay ? ' · ' + o.diaryDay : ''} · ${o.status || ''}`),
                 h('div', { 'data-dd-note': '' }, o.text || ''),
                 o.note ? h('div', { 'data-dd-note': '' }, '说明：' + o.note) : null),
               o.status === 'pending' ? h('div', { 'data-dd-row': '' },
@@ -610,6 +703,10 @@ window.__ModuleLoader__.load({
         ]),
         h(Sec, { title: '它的地盘', key: 'home' }, [
           h('div', { 'data-dd-note': '', key: 'h1' }, `家目录：${st.home || ''}`),
+          h('div', { 'data-dd-label': '', key: 'home-label' }, '新家目录（绝对路径）'),
+          h(Txt, { key: 'home-input', value: homeDraft, mono: true, placeholder: 'D:\\抖音大肥鱼', onChange: (v) => { homeDirty.current = true; setHomeDraft(v) } }),
+          h('div', { 'data-dd-note': '', key: 'home-note' }, '填写不存在或完全为空的独立目录。迁移配置、记忆、日报和登录态后立即生效，旧目录保留为备份。先保存改动，等本轮结束并关闭抖音专用浏览器后操作。'),
+          h(Btn, { key: 'home-move', primary: true, disabled: !!busy || dirty || polling || !homeDraft.trim() || homeDraft.trim() === st.home, onClick: onMoveHome }, busy === 'home' ? '正在迁移…' : '迁移并使用'),
           h('div', { 'data-dd-note': '', key: 'h2' }, 'config.json（配置）/ duty.md（自定义章程）/ self/memory.sqlite（独立记忆与人格）/ picks.json / seen.json / out/ / frames/ / duty.log / browser/'),
           h('div', { 'data-dd-note': '', key: 'h3' }, '日志超过 2MB 会自动滚到 duty.log.1。'),
           h('div', { 'data-dd-row': '', key: 'h4' },

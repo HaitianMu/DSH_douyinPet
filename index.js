@@ -38,11 +38,14 @@ import {
   countPicked, ensureDirs, ensureCharter,
 } from './lib/state.mjs'
 import {
-  readOutbox, listOutbox, setStatus as setOutboxStatus, sentToday, quotaLeft, hitWhitelist, OUTBOX_KINDS, reserveDelivery,
+  readOutbox, listOutbox, setStatus as setOutboxStatus, sentToday, quotaLeft, hitWhitelist, OUTBOX_KINDS, reserveDelivery, checkReservedDelivery,
 } from './lib/outbox.mjs'
 import { probeVision } from './lib/vision.mjs'
 import { withSelf, wakePrompt, familyOf } from './lib/self/tools.mjs'
 import { deliveryPolicy } from './lib/delivery-policy.mjs'
+import { defaultHomeOf, migrateHome } from './lib/home.mjs'
+import { SOCIAL_KINDS, contactsOf, socialPolicy, validateSocialSource } from './lib/social-policy.mjs'
+import { SocialBrowser } from './lib/social-browser.mjs'
 
 export const name = 'douyin-scroll'
 export const inject = ['webServer', 'tools', 'settings']
@@ -56,6 +59,8 @@ export const Config = !z ? undefined : z.object({
   dailyAt: z.string().default('').extra('volatile', true),
   onStart: z.boolean().default(false).extra('volatile', true),
   framesPerVideo: z.natural().default(3).extra('volatile', true),
+  videoWatchSeconds: z.natural().default(30).extra('volatile', true),
+  requestIntervalSeconds: z.natural().default(10).extra('volatile', true),
   useOcr: z.boolean().default(true).extra('volatile', true),
   useVision: z.boolean().default(false).extra('volatile', true),
   visionApiBase: z.string().default('').extra('volatile', true),
@@ -75,6 +80,15 @@ export const Config = !z ? undefined : z.object({
   groupEnabled: z.boolean().default(false).extra('volatile', true),
   groupWhitelist: z.array(z.string()).default([]).extra('volatile', true),
   groupDailyQuota: z.natural().default(1).extra('volatile', true),
+  socialContacts: z.array(z.string()).default([]).extra('volatile', true),
+  proactiveEnabled: z.boolean().default(false).extra('volatile', true),
+  proactiveDailyQuota: z.natural().default(1).extra('volatile', true),
+  autoReplyEnabled: z.boolean().default(false).extra('volatile', true),
+  replyDailyQuota: z.natural().default(5).extra('volatile', true),
+  inboxIntervalMinutes: z.natural().default(10).extra('volatile', true),
+  diaryEnabled: z.boolean().default(false).extra('volatile', true),
+  diaryAt: z.string().default('21:00').extra('volatile', true),
+  diaryPublishEnabled: z.boolean().default(false).extra('volatile', true),
   // 监护人的简短文字指导；成长人格保存在本项目的独立记忆库。
   personaPrompt: z.string().default('').extra('volatile', true),
   guardianName: z.string().default('监护人').extra('volatile', true),
@@ -94,14 +108,23 @@ export function apply(ctx, config) {
   let myVer = ''
   try { myVer = String(JSON.parse(readFileSync(join(pluginDir, 'package.json'), 'utf8')).version || '') } catch { myVer = '' }
 
-  const stateDir = stateDirOf(ctx)
-  ensureDirs(stateDir)
-  const outDir = join(stateDir, 'out')
-  const logFile = join(stateDir, 'duty.log')
-  const cfgFile = join(stateDir, 'config.json')
-  const stateFile = join(stateDir, 'state.json')
-  const picksFile = join(stateDir, 'picks.json')
-  const actedFile = join(stateDir, 'acted.json')
+  const defaultHome = defaultHomeOf(ctx)
+  let stateDir, outDir, logFile, cfgFile, stateFile, picksFile, actedFile
+  const useHome = (dir) => {
+    stateDir = dir
+    outDir = join(dir, 'out')
+    logFile = join(dir, 'duty.log')
+    cfgFile = join(dir, 'config.json')
+    stateFile = join(dir, 'state.json')
+    picksFile = join(dir, 'picks.json')
+    actedFile = join(dir, 'acted.json')
+  }
+  try { useHome(stateDirOf(ctx)); ensureDirs(stateDir) }
+  catch (e) { console.error(`[刷抖音] 初始化家目录失败：${e.message}`); return }
+  let relocating = false
+  let activeOperations = 0
+  let actionRunning = false
+  let browserTaskRunning = false
 
   // 关键词 / 博主链接：面板里可能被写成"一格整串"（用 / , ， 、 ; ； 或换行分隔），
   // 这里统一拆成数组 —— 2026-10-24 用户反馈 `AI/搞笑鬼畜/DeepSeek` 被当成一个关键词。
@@ -202,10 +225,25 @@ export function apply(ctx, config) {
   // 显示方式由 cfg.browserMode 决定（auto/hidden/headless/visible），登录时临时切 visible。
   let session = null
   let dy = null
-  const ensureDy = async (mode = '') => {
+  let lastIdentity = null
+  const browserTask = async (fn) => {
+    if (relocating || dutyChild || actionRunning || browserTaskRunning || loginActive()) throw new Error('其他浏览操作尚未结束，请稍后再试')
+    browserTaskRunning = true
+    try { return await fn() } finally { browserTaskRunning = false }
+  }
+  let browserQueue = Promise.resolve()
+  let loginStarting = false
+  let login = null
+  const loginActive = () => Boolean(loginStarting || (login && Date.now() < login.until))
+  const ensureDy = (mode = '') => {
+    const pending = browserQueue.then(() => prepareDy(mode))
+    browserQueue = pending.catch(() => {})
+    return pending
+  }
+  const prepareDy = async (mode = '') => {
     // ⭐ 每次都用**当前**配置算一遍要哪种窗口：以前只在建 session 时读一次 cfg，
     //   改成 headless/visible 之后跑一轮还是老样子（2026-10-24 真机"设了没生效"）。
-    const want = String(mode || cfg.browserMode || 'auto')
+    const want = String(loginActive() ? 'visible' : (mode || cfg.browserMode || 'auto'))
     if (!session) {
       session = new BrowserSession({
         dir: stateDir,
@@ -214,25 +252,12 @@ export function apply(ctx, config) {
         log,
       })
     }
-    await session.setMode(want)
-    if (!dy) {
-      await session.start()
-      dy = new Douyin(session, { log, dir: stateDir })
+    const switched = await session.setMode(want)
+    const started = await session.start()
+    if (!dy || switched.restarted || !started.reused) {
+      dy = new Douyin(session, { log, dir: stateDir, config: () => cfg })
     }
     return dy
-  }
-
-  /**
-   * 登录专用：**一定要有一个屏幕上看得见的窗口**。
-   *   2026-10-24 真机：之前测试留下的 headless 浏览器占着端口，点「登录抖音」只写了
-   *   「已打开登录窗口」，屏幕上什么都没有 —— 主人以为"浏览器打不开"。
-   *   所以登录时不再复用：关掉重开一个 visible 的。
-   */
-  const ensureDyFresh = async (mode = 'visible') => {
-    if (session) { try { await session.stop() } catch { /* 关不掉就换个新的 */ } }
-    session = null
-    dy = null
-    return ensureDy(mode)
   }
 
   // ⭐ P2（2026-10-24）：截帧过期清理 —— 每轮都往 frames/ 丢十几张 png，不清会无声长到几个 GB
@@ -384,12 +409,13 @@ export function apply(ctx, config) {
       '      config:',
       '        serverName: douyin-duty',
       '        transport: stdio',
-      `        command: '${posix(runner.command)}'`,
+      '        toolCallTimeoutMs: 600000',
+      `        command: ${JSON.stringify(posix(runner.command))}`,
       '        args:',
-      `          - '${posix(script)}'`,
+      `          - ${JSON.stringify(posix(script))}`,
       '        env:',
-      `          DOUYIN_HOME: '${posix(stateDir)}'`,
-      `          DOUYIN_PORT: '${Number(process.env.DOUYIN_PORT || 9333)}'`,
+      `          DOUYIN_HOME: ${JSON.stringify(posix(stateDir))}`,
+      `          DOUYIN_PORT: '${Number(process.env.DOUYIN_PORT || 0)}'`,
       ...extraEnv,
       '',
     )
@@ -397,7 +423,7 @@ export function apply(ctx, config) {
   }
 
   // Wake text stays short; identity, guide and retrieval are loaded through local tools.
-  const promptFor = () => wakePrompt(stateDir)
+  const promptFor = (why) => wakePrompt(stateDir, why)
 
   /** ⭐ P1（2026-10-24）：这一轮被"验证/风控/掉登录"中止了 —— 写清楚原因，别把 0 条伪装成正常 */
   const abortLatest = () => {
@@ -481,22 +507,34 @@ export function apply(ctx, config) {
    * ⭐ 把 outbox 里的一条**真发出去**（唯一能动的入口：轮末 auto 模式 / 面板批准）。
    *   配额按"今天真发出去几条"算；发完写状态，失败不吞。
    */
-  const deliverOutboxItem = async (draft) => {
+  const deliverOutboxItem = async (draft, { automatic = false } = {}) => {
     let reserved = false
     try {
       refreshCfg()
       if (configError) throw new Error(configError)
+      if (automatic && cfg.outboxMode !== 'auto') throw new Error('自动发送已关闭，草稿等待审核')
       const current = readOutbox(stateDir).find((o) => o.id === draft.id)
       if (!current) throw new Error('草稿不存在')
       const quota = deliveryPolicy(cfg, current)
-      withSelf(stateDir, (s) => {
+      const source = withSelf(stateDir, (s) => {
         s.checkTicket(current.ticket, 'draft', { forDelivery: true, maxAge: 86400000 })
-        s.document(current.memorySource, { current: true })
+        return SOCIAL_KINDS.includes(current.kind) ? validateSocialSource(s, current) : s.document(current.memorySource, { current: true })
       })
       const o = reserveDelivery(stateDir, current.id, dayKey(), quota)
       reserved = true
-      await ensureDy()
-      const r = o.kind === 'comment'
+      const d = await ensureDy()
+      let r
+      if (SOCIAL_KINDS.includes(o.kind)) {
+        const social = new SocialBrowser(d, { authorize: async (item) => {
+          refreshCfg()
+          if (configError) throw new Error(configError)
+          checkReservedDelivery(stateDir, item.id, dayKey(), socialPolicy(cfg, item))
+          if (automatic && cfg.outboxMode !== 'auto') throw new Error('自动发送已关闭，停止投递')
+          withSelf(stateDir, (s) => { s.checkTicket(item.ticket, 'draft', { forDelivery: true, maxAge: 86400000 }); validateSocialSource(s, item) })
+        } })
+        r = o.kind === 'diary' ? await social.publishDiary(o)
+          : await social.sendText(o, contactsOf(cfg).find((c) => c.secUid === o.peerSecUid), source.data.replyText || '')
+      } else r = o.kind === 'comment'
         ? await comment(session, o.videoId, o.text, { dryRun: false, mention: cfg.commentAtEnabled ? String(o.target || cfg.mentionName || '').trim().replace(/^@+/, '') : '' })
         : await share(session, o.videoId, o.target, { dryRun: false })
       const saved = setOutboxStatus(stateDir, o.id, r.ok ? 'sent' : (r.unknown ? 'unknown' : 'failed'), r.msg)
@@ -508,16 +546,19 @@ export function apply(ctx, config) {
       // A preflight rejection leaves the draft visible. An interrupted send is never retried.
       if (reserved) setOutboxStatus(stateDir, draft.id, 'unknown', msg)
       log(`草稿 ${draft.id} 未完成：${msg}`)
-      return { ok: false, error: msg }
+      return { ok: false, error: msg, aborted: e?.name === 'DouyinAbort' }
     }
   }
 
   const runActions = async (why) => {
+    if (relocating || dutyChild || actionRunning || browserTaskRunning || loginActive()) return
+    actionRunning = true
+    activeOperations++
     try {
       refreshCfg()
       if (configError) throw new Error(configError)
       const picks = readJsonObject(picksFile)[dayKey()] || []
-      if (cfg.favOn) for (const p of picks) {
+      if (cfg.favOn && !['social', 'diary'].includes(why)) for (const p of picks) {
         if (actedOf(p.id).favAt) continue
         try {
           withSelf(stateDir, (s) => {
@@ -530,7 +571,7 @@ export function apply(ctx, config) {
           const r = await fav(session, p.id, { dryRun: false })
           markActed(p.id, { favResult: r.ok ? 'confirmed' : 'unknown' })
           log(`收藏 ${p.id}：${r.msg}`)
-        } catch (e) { log(`收藏 ${p.id} 暂停：${e.message}`) }
+        } catch (e) { log(`收藏 ${p.id} 暂停：${e.message}`); if (e?.name === 'DouyinAbort') return }
       }
       const drafts = listOutbox(stateDir, { status: 'pending', limit: 100 }).reverse()
       if (cfg.outboxMode !== 'auto') {
@@ -541,9 +582,11 @@ export function apply(ctx, config) {
       const maxComments = Math.max(0, Math.min(Number(cfg.commentPerRound ?? 1), 5))
       for (const draft of drafts) {
         if (draft.kind === 'comment') { if (!cfg.autoComment || !cfg.mentionName || commentAttempts >= maxComments) continue; commentAttempts++ }
-        await deliverOutboxItem(draft)
+        const r = await deliverOutboxItem(draft, { automatic: true })
+        if (r.aborted) break
       }
     } catch (e) { log(`动作收尾出错：${e?.message ?? e}`) }
+    finally { activeOperations--; actionRunning = false }
   }
 
   // ⭐⭐（对齐 dsh-bili-scroll 2.0.4 体检第 2 条）：**同一时间只允许一轮在跑**，并登记这个子进程
@@ -557,6 +600,9 @@ export function apply(ctx, config) {
 
   const runDuty = (why = 'window') => {
     try {
+      if (relocating) return { started: false, why, busy: true, error: '正在迁移家目录，请稍后再试' }
+      if (actionRunning || browserTaskRunning || activeOperations > 1) return { started: false, why, busy: true, error: '正在发送或执行其他浏览操作，请稍后再试' }
+      if (loginActive()) return { started: false, why, busy: true, error: '正在等待扫码登录，请完成登录或结束等待后再运行' }
       if (dutyChild) {
         const alive = dutyChild.exitCode === null && !dutyChild.killed
         if (alive) {
@@ -577,6 +623,8 @@ export function apply(ctx, config) {
       }
       refreshCfg()
       if (configError) throw new Error(configError)
+      if (why === 'social' && !cfg.autoReplyEnabled) return { started: false, why, error: '请先开启来信回复并保存互动名单' }
+      if (why === 'diary' && !cfg.diaryEnabled) return { started: false, why, error: '请先开启每日日常' }
       const dsh = resolveDsh()
       if (dsh.missing) {
         log('这一轮没跑：' + dsh.hint)
@@ -584,10 +632,11 @@ export function apply(ctx, config) {
         return { started: false, why, error: dsh.hint }
       }
       const overlay = ensureOverlay()
+      const runDay = dayKey()
       const profile = String(cfg.headlessProfile || 'headless')
       const args = [...dsh.args, '--profile', profile]
       if (overlay) args.push('--patch', overlay)
-      args.push(promptFor())
+      args.push(promptFor(why))
       const spawnCmd = dsh.shell ? shellCmd(dsh.command) : dsh.command   // 带空格的路径必须补引号
       log(`刷抖音开跑（${why}）：${spawnCmd} … --profile ${profile}（detached 后台进程）`)
       // ⭐ 2026-10-24：这一轮要**独立跑完**（主人原话「到点就真起一个后台 dsh」）
@@ -613,6 +662,8 @@ export function apply(ctx, config) {
       if (logFd >= 0) { try { closeSync(logFd) } catch { /* 关不掉就算了，不影响这一轮 */ } }
       try { child.unref?.() } catch { /* 不支持就算了 */ }
       child.on('exit', (code) => {
+        try {
+        if (dutyChild === child) dutyChild = null
         log(`刷抖音结束（${why}，code=${code}）`)
         const ab = abortLatest()
         try {
@@ -620,6 +671,14 @@ export function apply(ctx, config) {
           st.day = dayKey()
           st.lastRunAt = new Date().toISOString()
           st.lastWhy = why
+          if (why === 'diary' && code === 0) {
+            try {
+              const doc = withSelf(stateDir, (s) => s.document(`diary:${runDay}@` + (s.db.prepare('SELECT rev FROM heads WHERE id=?').get(`diary:${runDay}`)?.rev || 0), { current: true }))
+              // Writing succeeded but queueing may have failed; retry until a matching draft exists.
+              st.diaryKey = runDay
+              if (cfg.diaryPublishEnabled && readOutbox(stateDir).some((o) => o.kind === 'diary' && o.diaryDay === runDay)) st.diaryPublishKey = runDay
+            } catch { /* Retry later if diary or publication draft is missing. */ }
+          }
           st.picked = countPicked(outDir)
           if (ab) st.lastAbort = { at: ab.at, reason: ab.reason, url: ab.url || '', shot: ab.shot || '' }
           writeJson(stateFile, st)
@@ -627,11 +686,12 @@ export function apply(ctx, config) {
         if (ab) {
           // ⭐ 被验证/风控拦住 ⇒ 写清原因，并且**不做收藏/评论**（那会继续拿用户账号冒险）
           writeAbortReport(ab)
-        } else {
+        } else if (!['social', 'diary'].includes(why)) {
           stubReportIfMissing(code)
         }
         rotateLogIfBig()
         if (!ab && code === 0) Promise.resolve(runActions(why)).catch((e) => log(`动作异常：${e?.message ?? e}`))
+        } catch (e) { log(`值班结束处理失败（已兜住）：${e?.message ?? e}`) }
       })
       child.on('error', (e) => log(`刷抖音起不来：${e?.message ?? e}`))
       // ⭐ 起不来/被杀掉也要把锁放开，否则之后每一轮都会被判成"上一轮还没结束" ✗
@@ -652,10 +712,20 @@ export function apply(ctx, config) {
    */
   const tick = () => {
     try {
+      if (relocating) return
       refreshCfg()
       const now = new Date()
       const st = readJson(stateFile, {})
       const today = dayKey(now)
+
+      if (cfg.diaryEnabled && hhmm(now) >= cfg.diaryAt && (st.diaryKey !== today || (cfg.diaryPublishEnabled && st.diaryPublishKey !== today)) && now.getTime() - Date.parse(st.diaryAttemptAt || '1970-01-01') >= 30 * 60000) {
+        if (runDuty('diary').started) writeJson(stateFile, { ...st, diaryAttemptAt: now.toISOString() })
+        return
+      }
+      if (cfg.autoReplyEnabled && contactsOf(cfg).length && now.getTime() - Date.parse(st.inboxAttemptAt || '1970-01-01') >= Math.max(10, Number(cfg.inboxIntervalMinutes) || 10) * 60000) {
+        if (runDuty('social').started) writeJson(stateFile, { ...st, inboxAttemptAt: now.toISOString() })
+        return
+      }
 
 
       // ① 每日固定时间 —— ⭐ 2026-10-24 改成「到点或已过点、今天还没跑就跑」
@@ -701,6 +771,7 @@ export function apply(ctx, config) {
   try {
     const startupTimer = setTimeout(() => {
       try {
+        if (relocating) return
         refreshCfg()
         if (!cfg.onStart) return
         const st = readJson(stateFile, {})
@@ -738,7 +809,11 @@ export function apply(ctx, config) {
         schema: { type: 'json' },
         render: (_args, value) => [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }],
       },
-      async execute(args, exec) { return safe(await spec.execute(args, exec)) },
+      async execute(args, exec) {
+        if (relocating) return { ok: false, error: '正在迁移家目录，请稍后再试' }
+        activeOperations++
+        try { return safe(await spec.execute(args, exec)) } finally { activeOperations-- }
+      },
     }))
   }
 
@@ -753,7 +828,7 @@ export function apply(ctx, config) {
     name: 'douyin_whoami',
     description: '看抖音那边登录的是谁。没登录要先去设置页点「登录抖音」。',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
-    async execute() { const d = await ensureDy(); return await d.whoami() },
+    async execute() { return browserTask(async () => { const d = await ensureDy(); return lastIdentity = await d.whoami() }) },
   })
 
   tool({
@@ -769,6 +844,7 @@ export function apply(ctx, config) {
       additionalProperties: false,
     },
     async execute(a) {
+      return browserTask(async () => {
       const d = await ensureDy()
       const n = Number(a?.n) || 8
       const what = String(a?.what || 'hot')
@@ -776,6 +852,7 @@ export function apply(ctx, config) {
       if (what === 'following') return await d.following(n)
       if (what === 'feed') return await d.feed(n)
       return await d.hot(n)
+      })
     },
   })
 
@@ -830,6 +907,8 @@ export function apply(ctx, config) {
   const TOKEN_ROUTES = new Set([
     '/api/douyin-duty/config', '/api/douyin-duty/run', '/api/douyin-duty/login/start',
     '/api/douyin-duty/outbox/approve', '/api/douyin-duty/outbox/discard', '/api/douyin-duty/self/feedback',
+    '/api/douyin-duty/home', '/api/douyin-duty/login/cancel',
+    '/api/douyin-duty/social/run', '/api/douyin-duty/diary/run',
   ])
   const apiGuard = (req, path) => {
     try {
@@ -862,6 +941,13 @@ export function apply(ctx, config) {
     if (!body || typeof body !== 'object' || Array.isArray(body)) return { out, rejected: ['body'] }
     for (const [k, v] of Object.entries(body)) {
       if (!CFG_KEYS.has(k)) { rejected.push(k); continue }
+      if (k === 'socialContacts') {
+        try {
+          if (!Array.isArray(v) || v.some((s) => typeof s !== 'string' || s.length > 500)) throw new Error('Invalid contacts')
+          contactsOf({ socialContacts: v }); out[k] = v.map((s) => s.trim())
+        } catch { rejected.push(k) }
+        continue
+      }
       if (k === 'sources') {
         if (!v || typeof v !== 'object' || Array.isArray(v)) { rejected.push(k); continue }
         const s = {}
@@ -884,7 +970,13 @@ export function apply(ctx, config) {
       }
       if (typeof DEFAULT_CFG[k] === 'boolean' && typeof v !== 'boolean') { rejected.push(k); continue }
       if (typeof DEFAULT_CFG[k] === 'number' && (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 1000)) { rejected.push(k); continue }
+      if (k === 'videoWatchSeconds' && (v < 30 || v > 120)) { rejected.push(k); continue }
+      if (k === 'requestIntervalSeconds' && (v < 10 || v > 60)) { rejected.push(k); continue }
+      if (k === 'inboxIntervalMinutes' && (v < 10 || v > 120)) { rejected.push(k); continue }
+      if (['proactiveDailyQuota', 'replyDailyQuota'].includes(k) && v > 50) { rejected.push(k); continue }
+      if (k === 'diaryAt' && (typeof v !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(v))) { rejected.push(k); continue }
       if (k === 'outboxMode' && !['review', 'auto'].includes(v)) { rejected.push(k); continue }
+      if (k === 'browserMode' && !['auto', 'hidden', 'headless', 'visible'].includes(v)) { rejected.push(k); continue }
       if (k === 'familyMembers' && (!Array.isArray(v) || v.some((line) => typeof line !== 'string' || line.length > 250 || !/^[^|]+\|[^|]+(?:\|[^|]*)?$/.test(line)))) { rejected.push(k); continue }
       if (LIST_KEYS.has(k)) {
         const arr = Array.isArray(v) ? v : (typeof v === 'string' ? [v] : null)
@@ -919,6 +1011,25 @@ export function apply(ctx, config) {
       return sendJson(res, 200, { ok: !configError, cfg, version: myVer, home: stateDir, error: configError })
     }
 
+    if (req.method === 'POST' && path === '/api/douyin-duty/home') {
+      const body = await readBody(req)
+      if (relocating || activeOperations > 1 || dutyChild || actionRunning || browserTaskRunning || loginActive()) return sendJson(res, 409, { ok: false, error: '值班、登录或其他操作尚未结束，请结束后再迁移家目录' })
+      relocating = true
+      try {
+        const browser = session || new BrowserSession({ dir: stateDir })
+        if ((browser.port || browser.recordedPort()) && await browser.alive()) return sendJson(res, 409, { ok: false, error: '请先关闭抖音专用浏览器，再迁移家目录；隐藏窗口可先在日常页切到 visible 再关闭' })
+        const result = await migrateHome({ defaultHome, currentHome: stateDir, targetHome: body?.home, pluginDir })
+        if (result.changed) {
+          useHome(result.home)
+          session = null; dy = null; login = null; lastIdentity = null
+          refreshCfg()
+          log(`家目录已迁移：${result.previousHome} → ${stateDir}（旧目录保留为备份）`)
+        }
+        return sendJson(res, 200, { ok: true, ...result })
+      } catch (e) { return sendJson(res, 400, { ok: false, error: e.message }) }
+      finally { relocating = false }
+    }
+
     if (req.method === 'POST' && path === '/api/douyin-duty/config') {
       const body = await readBody(req)
       const { out, rejected } = pickCfg(body)
@@ -928,9 +1039,9 @@ export function apply(ctx, config) {
       // ⭐ 2026-10-24 真机：「浏览器窗口」这一项以前只在第一次建 session 时读一次 cfg，
       //   之后再改 headless/visible 都不会动，主人以为"设了没生效"。改成当场切。
       const newMode = String(cfg.browserMode || 'auto')
-      if (session && newMode !== prevMode) {
+      if (session && newMode !== prevMode && !loginActive() && !dutyChild && !actionRunning && !browserTaskRunning) {
         try {
-          await session.setMode(newMode)
+          await ensureDy(newMode)
           log(`浏览器窗口已切到 ${newMode}`)
         } catch (e) { log(`切浏览器窗口失败（不影响下一轮）：${e?.message ?? e}`) }
       }
@@ -962,11 +1073,15 @@ export function apply(ctx, config) {
       refreshCfg()
       const st = readJson(stateFile, {})
       // ⭐ P0：**只探活，不起浏览器** —— 以前面板一刷新就把浏览器拉起来（用户：点开插件就开浏览器、很烦）
-      let me = { loggedIn: false }
+      let me = lastIdentity || { loggedIn: false }
+      let loginUnknown = true
       let binfo = { alive: false, port: 0, mode: String(cfg.browserMode || 'auto') }
       try {
         if (session) binfo = { ...binfo, ...(await session.aliveInfo()) }
-        if (binfo.alive) me = await (await ensureDy()).whoami()
+        // 状态刷新只读取现有会话，不能切换模式、重启浏览器或打断扫码。
+        if (binfo.alive && dy && !loginActive() && !dutyChild && !actionRunning && !browserTaskRunning) {
+          me = await browserTask(() => dy.whoami()); lastIdentity = me; loginUnknown = false
+        }
       } catch { /* 探不到就当没开 */ }
       return sendJson(res, 200, {
         ok: true,
@@ -978,7 +1093,9 @@ export function apply(ctx, config) {
         lastRunAt: st.lastRunAt || '',
         configError,
         loggedIn: Boolean(me?.loggedIn),
+        loginUnknown,
         who: me?.name || '',
+        loginPending: loginActive(),
         peakNow: isPeak(new Date()),
         browser: binfo,
         lastAbort: st.lastAbort || null,
@@ -995,20 +1112,48 @@ export function apply(ctx, config) {
 
     // 登录：开一个**看得见的**浏览器窗口，让主人在里面扫码
     if (req.method === 'POST' && path === '/api/douyin-duty/login/start') {
+      if (dutyChild || loginStarting || activeOperations > 1) return sendJson(res, 409, { ok: false, error: '值班或其他操作尚未结束，请稍后再登录' })
+      loginStarting = true
       try {
-        await ensureDyFresh('visible')   // ⭐ 登录必须让人看见窗口：关掉复用的那个、重开一个真窗口
-        const t = await session.tab('https://www.douyin.com/')
-        try { await session.show() } catch { /* 有些窗口不让切，不影响扫码 */ }
+        const d = await ensureDy('visible')
+        const page = await d.ctxPage()
+        if (!(await session.show())) throw new Error('无法把登录窗口显示到屏幕上，请关闭抖音专用浏览器后重试')
+        await page.cdp.send('Page.bringToFront', {}, 5_000)
+        login = { dy: d, session, until: Date.now() + 5 * 60_000, checking: null }
         log('已打开登录窗口，等主人扫码')
         return sendJson(res, 200, { ok: true, hint: '浏览器窗口已打开 —— 在里面扫码登录抖音，登完这边会自动变成"已登录"' })
-      } catch (e) { return sendJson(res, 200, { ok: false, error: String(e?.message ?? e) }) }
+      } catch (e) {
+        login = null
+        const error = String(e?.message ?? e)
+        log(`打开登录窗口失败：${error}`)
+        return sendJson(res, 500, { ok: false, error })
+      }
+      finally { loginStarting = false }
     }
 
     if (req.method === 'GET' && path === '/api/douyin-duty/login/poll') {
+      const current = login
+      if (!current) return sendJson(res, 200, { ok: true, state: 'idle' })
+      if (Date.now() >= current.until) {
+        login = null
+        return sendJson(res, 200, { ok: true, state: 'expired', error: '登录等待已超时，请重新点击「登录抖音」' })
+      }
       try {
-        const me = await (await ensureDy()).whoami()
+        if (!(await current.session.alive())) {
+          if (login === current) login = null
+          return sendJson(res, 200, { ok: true, state: 'closed', error: '登录浏览器已关闭，请重新点击「登录抖音」' })
+        }
+        if (!current.checking) current.checking = current.dy.whoami().finally(() => { current.checking = null })
+        const me = await current.checking
+        lastIdentity = me
+        if (me.loggedIn && login === current) login = null
         return sendJson(res, 200, { ok: true, state: me.loggedIn ? 'ok' : 'wait', who: me.name || '' })
       } catch (e) { return sendJson(res, 200, { ok: false, state: 'wait', error: String(e?.message ?? e) }) }
+    }
+
+    if (req.method === 'POST' && path === '/api/douyin-duty/login/cancel') {
+      login = null
+      return sendJson(res, 200, { ok: true })
     }
 
     if (req.method === 'POST' && path === '/api/douyin-duty/run') {
@@ -1016,8 +1161,15 @@ export function apply(ctx, config) {
       return sendJson(res, 200, { ok: true, ...r })
     }
 
+    if (req.method === 'POST' && ['/api/douyin-duty/social/run', '/api/douyin-duty/diary/run'].includes(path)) {
+      const r = runDuty(path.includes('/social/') ? 'social' : 'diary')
+      return sendJson(res, 200, { ok: r.started, ...r })
+    }
+
     // 「测一下」：登录 + 各来源各取一条，直接回答"能不能用"
     if (req.method === 'GET' && path === '/api/douyin-duty/test') {
+      if (dutyChild || actionRunning || browserTaskRunning || loginActive()) return sendJson(res, 409, { ok: false, error: '其他浏览操作尚未结束' })
+      browserTaskRunning = true
       const out = { ok: true, steps: [] }
       try {
         const d = await ensureDy()
@@ -1036,6 +1188,7 @@ export function apply(ctx, config) {
           }
         }
       } catch (e) { out.ok = false; out.error = String(e?.message ?? e) }
+      finally { browserTaskRunning = false }
       return sendJson(res, 200, out)
     }
 
@@ -1072,7 +1225,7 @@ export function apply(ctx, config) {
         mode: String(cfg.outboxMode || 'review'),
         pending: listOutbox(stateDir, { status: 'pending', limit: 100 }).length,
         sentToday: sentToday(stateDir, dayKey(), 'comment'),
-        quota: { comment: Number(cfg.dailyCommentQuota ?? 5), dm: Number(cfg.dmDailyQuota ?? 1), group: Number(cfg.groupDailyQuota ?? 1) },
+        quota: { comment: Number(cfg.dailyCommentQuota ?? 5), dm: Number(cfg.dmDailyQuota ?? 1), group: Number(cfg.groupDailyQuota ?? 1), message: cfg.proactiveDailyQuota, reply: cfg.replyDailyQuota, diary: 1 },
         items: listOutbox(stateDir, { limit: 40 }),
       })
     }
@@ -1082,13 +1235,16 @@ export function apply(ctx, config) {
       const body = await readBody(req)
       const ids = (Array.isArray(body?.ids) ? body.ids : [body?.id]).map(String).filter(Boolean).slice(0, 10)
       if (!ids.length) return sendJson(res, 400, { ok: false, error: '没给 ids' })
+      if (actionRunning || dutyChild || browserTaskRunning || loginActive() || activeOperations > 1) return sendJson(res, 409, { ok: false, error: '值班、登录或发送尚未结束，请稍后再批准' })
+      actionRunning = true
       const results = []
-      for (const id of ids) {
+      try { for (const id of ids) {
         const o = readOutbox(stateDir).find((x) => x.id === id)
         if (!o) { results.push({ id, ok: false, error: '没有这条' }); continue }
         const r = await deliverOutboxItem(o)
         results.push({ id, kind: o.kind, ok: Boolean(r?.ok), msg: r?.msg || r?.error || '' })
-      }
+        if (r.aborted) break
+      } } finally { actionRunning = false }
       return sendJson(res, 200, { ok: true, results })
     }
 
@@ -1119,7 +1275,10 @@ export function apply(ctx, config) {
       kind: 'prefix',
       path: '/api/douyin-duty',
       handler: async (req, res) => {
+        if (relocating) return sendJson(res, 409, { ok: false, error: '正在迁移家目录，请稍后再试' })
+        activeOperations++
         try { await handle(req, res) } catch (e) { sendJson(res, 500, { ok: false, error: e?.message ?? String(e) }) }
+        finally { activeOperations-- }
       },
     }), 'douyin-duty: /api/douyin-duty 路由')
   } catch (e) { log(`HTTP 路由没挂上：${e?.message ?? e}`) }

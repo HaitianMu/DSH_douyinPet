@@ -7,19 +7,20 @@ import { BrowserSession } from '../lib/browser.mjs'
 import { Douyin } from '../lib/douyin.mjs'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { homedir } from 'node:os'
+import { homeDirOf } from '../lib/home.mjs'
+import { readJsonObject, DEFAULT_CFG } from '../lib/state.mjs'
 
-const HOME = process.env.DOUYIN_HOME || join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'douyin-duty')
+const HOME = process.env.DOUYIN_HOME || homeDirOf()
 mkdirSync(join(HOME, 'frames'), { recursive: true })
 
 const log = (...a) => console.log('[selftest]', ...a)
 const line = (t) => console.log('\n──── ' + t + ' ────')
 
 async function main() {
-  setTimeout(() => { log('硬超时，收工'); process.exit(0) }, 115_000).unref?.()
+  setTimeout(() => { log('硬超时，自检未完成'); process.exit(1) }, 900_000).unref?.()
 
-  const session = new BrowserSession({ dir: HOME, port: 9333, log })
-  const dy = new Douyin(session, { log, dir: HOME })
+  const session = new BrowserSession({ dir: HOME, port: Number(process.env.DOUYIN_PORT || 0), log })
+  const dy = new Douyin(session, { log, dir: HOME, config: () => ({ ...DEFAULT_CFG, ...readJsonObject(join(HOME, 'config.json')) }) })
 
   line('浏览器')
   const started = await session.start()
