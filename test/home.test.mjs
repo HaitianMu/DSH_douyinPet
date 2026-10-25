@@ -1,12 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs, { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
+import fsPromises from 'node:fs/promises'
 import childProcess from 'node:child_process'
 import { syncBuiltinESMExports } from 'node:module'
 import { EventEmitter } from 'node:events'
 import { Readable } from 'node:stream'
 import { tmpdir } from 'node:os'
-import { dirname, join, resolve, sep } from 'node:path'
+import { dirname, join, parse, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { apply } from '../index.js'
 import { BrowserSession } from '../lib/browser.mjs'
@@ -134,7 +135,7 @@ test('relocation requires a token and rejects occupied, overlapping, foreign and
   writeFileSync(join(occupied, 'sentinel'), 'keep-existing-data')
   const file = join(root, 'a-file'); writeFileSync(file, 'keep-file')
   const configBefore = readFileSync(join(home, 'config.json'), 'utf8')
-  for (const bad of ['', 'relative/path', 12, null, file, occupied, root, join(home, 'child'), pluginDir, join(pluginDir, 'private-data'), join(root, 'bili-duty', 'child')]) {
+  for (const bad of ['', 'relative/path', 'invalid\npath', 12, null, parse(root).root, file, occupied, root, join(home, 'child'), pluginDir, join(pluginDir, 'private-data'), join(root, 'bili-duty', 'child')]) {
     const result = await host.api('/home', { method: 'POST', token, body: { home: bad } })
     assert.equal(result.status, 400, String(bad))
     assert.equal((await host.api('/config')).data.home, home)
@@ -204,6 +205,26 @@ test('live browser and concurrent operations prevent migration without starting 
   assert.equal(existsSync(target), false)
 })
 
+test('migration verifies critical files before switching and rolls back an inconsistent copy', async (t) => {
+  const { root, home, ctx, start } = fixture(t)
+  start()
+  const target = join(root, 'inconsistent-copy')
+  const originalConfig = readFileSync(join(home, 'config.json'), 'utf8')
+  const originalCopy = fsPromises.copyFile
+  const mocked = t.mock.method(fsPromises, 'copyFile', async (from, to, mode) => {
+    await originalCopy(from, to, mode)
+    if (to === join(target, 'config.json')) writeFileSync(to, '{"synthetic":"inconsistent-copy"}')
+  })
+  syncBuiltinESMExports()
+  try {
+    await assert.rejects(migrateHome({ defaultHome: home, currentHome: home, targetHome: target, pluginDir }), /资料发生变化/)
+    assert.equal(homeDirOf(ctx), home)
+    assert.equal(readFileSync(join(home, 'config.json'), 'utf8'), originalConfig)
+    assert.equal(existsSync(target), false)
+    assert.equal(existsSync(join(home, 'home-location.json.lock')), false)
+  } finally { mocked.mock.restore(); syncBuiltinESMExports() }
+})
+
 test('running duty blocks migration and the next duty uses the new cwd, environment and quoted overlay', async (t) => {
   const { root, home, start } = fixture(t)
   const host = start(); const token = (await host.api('/token')).data.token
@@ -239,12 +260,18 @@ test('damaged or missing custom homes never fall back to an old identity', async
   start()
   assert.equal(defaultHomeOf({ get: () => root }), home)
   const file = join(home, 'home-location.json')
-  for (const raw of ['{broken', 'null', '{"version":1,"home":"relative"}', JSON.stringify({ version: 1, home: join(root, 'missing') })]) {
+  for (const raw of ['{broken', 'null', '{"version":1,"home":"relative"}', JSON.stringify({ version: 1, platform: 'bili', home }), JSON.stringify({ version: 1, home: join(root, 'missing') })]) {
     writeFileSync(file, raw)
     assert.throws(() => homeDirOf(ctx), /不会回退/)
     assert.equal(readFileSync(file, 'utf8'), raw)
     assert.equal(existsSync(join(root, 'missing')), false)
   }
+  writeFileSync(file, JSON.stringify({ version: 1, platform: 'douyin', home }))
+  const marker = join(home, '.douyin-home-incomplete')
+  writeFileSync(marker, 'synthetic incomplete migration')
+  assert.throws(() => homeDirOf(ctx), /迁移未完成/)
+  unlinkSync(marker)
+  assert.equal(homeDirOf(ctx), home)
   unlinkSync(file)
   assert.equal(homeDirOf(ctx), home)
   writeFileSync(join(home, 'outbox.jsonl.lock'), 'synthetic stale lock')

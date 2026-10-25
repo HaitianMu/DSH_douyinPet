@@ -15,11 +15,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TianmuTan/dsh-douyin.git"
+    "url": "git+https://github.com/HaitianMu/DSH_douyinPet.git"
   },
-  "homepage": "https://github.com/TianmuTan/dsh-douyin#readme",
+  "homepage": "https://github.com/HaitianMu/DSH_douyinPet#readme",
   "bugs": {
-    "url": "https://github.com/TianmuTan/dsh-douyin/issues"
+    "url": "https://github.com/HaitianMu/DSH_douyinPet/issues"
   },
   "type": "module",
   "main": "index.js",

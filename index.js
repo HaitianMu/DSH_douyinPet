@@ -119,7 +119,7 @@ export function apply(ctx, config) {
     picksFile = join(dir, 'picks.json')
     actedFile = join(dir, 'acted.json')
   }
-  try { useHome(stateDirOf(ctx)); ensureDirs(stateDir) }
+  try { useHome(stateDirOf(ctx, { pluginDir })); ensureDirs(stateDir) }
   catch (e) { console.error(`[刷抖音] 初始化家目录失败：${e.message}`); return }
   let relocating = false
   let activeOperations = 0

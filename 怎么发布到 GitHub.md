@@ -1,6 +1,6 @@
 # 推送源码与发布软件包
 
-本项目源码仓库为 [TianmuTan/dsh-douyin](https://github.com/TianmuTan/dsh-douyin)，本机 `origin` 指向 `https://github.com/TianmuTan/dsh-douyin.git`，主分支为 `main`。保留上游 MIT 许可证和 NOTICE.md 署名。
+本项目源码仓库为 [HaitianMu/DSH_douyinPet](https://github.com/HaitianMu/DSH_douyinPet)，本机 `origin` 指向 `https://github.com/HaitianMu/DSH_douyinPet.git`，主分支为 `main`。保留上游 MIT 许可证和 NOTICE.md 署名。
 
 ## 更新源码仓库
 

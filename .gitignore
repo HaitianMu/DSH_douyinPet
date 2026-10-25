@@ -38,6 +38,8 @@ docs/images/
 /picks.json
 /acted.json
 /outbox.jsonl
+/home-location.json
+/.douyin-home-incomplete
 /browser/
 /frames/
 /self/

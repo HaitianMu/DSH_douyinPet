@@ -2,7 +2,7 @@
 
 本项目是 DSH 插件，需要在 DSH 中运行。`node index.js` 不会启动设置页或值班任务；`tools/memory.mjs` 只用于本地查看、反馈和维护记忆。
 
-源码仓库：[TianmuTan/dsh-douyin](https://github.com/TianmuTan/dsh-douyin)。当前源码版本为 2.0.0，基于上游 1.4.14，尚未发布 npm 软件包。
+源码仓库：[HaitianMu/DSH_douyinPet](https://github.com/HaitianMu/DSH_douyinPet)。当前源码版本为 2.0.0，基于上游 1.4.14，尚未发布 npm 软件包。
 
 ## 1. 准备环境
 
@@ -35,15 +35,15 @@ dsh plugin --profile desktop add link:F:\GitProgramManager\dsh-douyin
 其他机器可以先克隆，再安装本地目录：
 
 ```powershell
-git clone https://github.com/TianmuTan/dsh-douyin.git
-Set-Location -LiteralPath '.\dsh-douyin'
+git clone https://github.com/HaitianMu/DSH_douyinPet.git
+Set-Location -LiteralPath '.\DSH_douyinPet'
 dsh plugin --profile desktop add "link:$((Get-Location).Path)"
 ```
 
 也可以直接从 GitHub 安装：
 
 ```powershell
-dsh plugin --profile desktop add github:TianmuTan/dsh-douyin
+dsh plugin --profile desktop add github:HaitianMu/DSH_douyinPet
 ```
 
 三种方式选一种即可。`desktop` 要换成你实际使用的宿主 profile，网页版通常使用 `web`。如果 PowerShell 找不到 `dsh`，使用 DSH 提供的命令行环境或其实际 `dsh.cmd` 完整路径执行安装命令。
@@ -134,9 +134,15 @@ DSH 需要保持运行。每日日常错过时间可补跑，准备失败至少�
 
 实际运行目录以设置页显示的路径为准。通常是 `$DSH_HOME/douyin-duty/`，未设置时是 `~/.dsh/douyin-duty/`；源码目录只放程序。
 
-修改家目录：进入 **高级 → 它的地盘**，填写不存在或完全为空的目录的绝对路径，再点 **迁移并使用**。先保存页面改动，等待值班、自检、发送等操作结束，并关闭抖音专用浏览器；隐藏的窗口可以先在日常页切换成 `visible` 再关闭。迁移会复制配置、SQLite 记忆、日报、截帧及浏览器登录态，完成后立即使用新位置，旧目录保留为备份。迁移不覆盖或合并已有数据，也不允许指向 B 站目录、插件源码、当前或默认目录的上下级。
+### 修改家目录
+
+进入 **高级 → 它的地盘**，填写不存在或完全为空的目录的绝对路径，再点 **迁移并使用**。先保存页面改动，等待值班、自检、发送等操作结束，并关闭抖音专用浏览器；隐藏的窗口可以先在日常页切换成 `visible` 再关闭。迁移会复制配置、SQLite 记忆、日报、截帧及浏览器登录态，校验关键文件后立即使用新位置，旧目录保留为备份。迁移不覆盖或合并已有数据，也不允许指向 B 站目录、插件源码、当前或默认目录的上下级。
 
 默认家目录内的 `home-location.json` 是重启后定位新家的文件，即使清理旧备份也要保留。新位置不可用或定位文件损坏时插件停止初始化并报错，不会静默使用旧目录或创建新身份。迁移失败时仍使用原目录；如目标有未清理的残留，检查后改用另一个空目录。不要让多份 DSH 宿主或独立 CLI 进程同时写入迁移中的目录。
+
+位置记录和实际运行目录都要纳入备份。迁移锁 `home-location.json.lock` 残留时，先确认迁移进程已退出并核查新旧目录，再人工清理锁。
+
+### 备份与更新
 
 | 路径 | 内容 |
 | --- | --- |
