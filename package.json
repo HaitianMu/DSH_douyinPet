@@ -53,7 +53,7 @@
     "docs/running.md"
   ],
   "scripts": {
-    "test": "node --test test/self.test.mjs test/mcp.test.mjs test/host.test.mjs",
+    "test": "node --test test/self.test.mjs test/mcp.test.mjs test/host.test.mjs test/home.test.mjs",
     "check": "node tools/check.mjs"
   },
   "engines": {

@@ -34,7 +34,7 @@ import { BrowserSession } from './lib/browser.mjs'
 import { Douyin } from './lib/douyin.mjs'
 import { fav, comment, share } from './lib/act.mjs'
 import {
-  WINDOWS, DEFAULT_CFG, stateDirOf, readJson, readJsonObject, writeJson, dayKey, hhmm, isPeak, inWindow,
+  WINDOWS, DEFAULT_CFG, stateDirOf, defaultStateDirOf, readJson, readJsonObject, writeJson, dayKey, hhmm, isPeak, inWindow,
   countPicked, ensureDirs, ensureCharter,
 } from './lib/state.mjs'
 import {
@@ -43,6 +43,7 @@ import {
 import { probeVision } from './lib/vision.mjs'
 import { withSelf, wakePrompt, familyOf } from './lib/self/tools.mjs'
 import { deliveryPolicy } from './lib/delivery-policy.mjs'
+import { migrateHome } from './lib/home.mjs'
 
 export const name = 'douyin-scroll'
 export const inject = ['webServer', 'tools', 'settings']
@@ -94,14 +95,22 @@ export function apply(ctx, config) {
   let myVer = ''
   try { myVer = String(JSON.parse(readFileSync(join(pluginDir, 'package.json'), 'utf8')).version || '') } catch { myVer = '' }
 
-  const stateDir = stateDirOf(ctx)
+  const defaultHome = defaultStateDirOf(ctx)
+  let stateDir = stateDirOf(ctx, { pluginDir })
   ensureDirs(stateDir)
-  const outDir = join(stateDir, 'out')
-  const logFile = join(stateDir, 'duty.log')
-  const cfgFile = join(stateDir, 'config.json')
-  const stateFile = join(stateDir, 'state.json')
-  const picksFile = join(stateDir, 'picks.json')
-  const actedFile = join(stateDir, 'acted.json')
+  let outDir = join(stateDir, 'out')
+  let logFile = join(stateDir, 'duty.log')
+  let cfgFile = join(stateDir, 'config.json')
+  let stateFile = join(stateDir, 'state.json')
+  let picksFile = join(stateDir, 'picks.json')
+  let actedFile = join(stateDir, 'acted.json')
+  let homeMoving = false
+  let homeOperations = 0
+  const withHome = async (fn) => {
+    if (homeMoving) throw new Error('家目录正在迁移，请稍后再试')
+    homeOperations++
+    try { return await fn() } finally { homeOperations-- }
+  }
 
   // 关键词 / 博主链接：面板里可能被写成"一格整串"（用 / , ， 、 ; ； 或换行分隔），
   // 这里统一拆成数组 —— 2026-10-24 用户反馈 `AI/搞笑鬼畜/DeepSeek` 被当成一个关键词。
@@ -384,11 +393,11 @@ export function apply(ctx, config) {
       '      config:',
       '        serverName: douyin-duty',
       '        transport: stdio',
-      `        command: '${posix(runner.command)}'`,
+      `        command: ${JSON.stringify(posix(runner.command))}`,
       '        args:',
-      `          - '${posix(script)}'`,
+      `          - ${JSON.stringify(posix(script))}`,
       '        env:',
-      `          DOUYIN_HOME: '${posix(stateDir)}'`,
+      `          DOUYIN_HOME: ${JSON.stringify(posix(stateDir))}`,
       `          DOUYIN_PORT: '${Number(process.env.DOUYIN_PORT || 9333)}'`,
       ...extraEnv,
       '',
@@ -557,6 +566,7 @@ export function apply(ctx, config) {
 
   const runDuty = (why = 'window') => {
     try {
+      if (homeMoving) return { started: false, why, busy: true, error: '家目录正在迁移' }
       if (dutyChild) {
         const alive = dutyChild.exitCode === null && !dutyChild.killed
         if (alive) {
@@ -631,7 +641,7 @@ export function apply(ctx, config) {
           stubReportIfMissing(code)
         }
         rotateLogIfBig()
-        if (!ab && code === 0) Promise.resolve(runActions(why)).catch((e) => log(`动作异常：${e?.message ?? e}`))
+        if (!ab && code === 0) withHome(() => runActions(why)).catch((e) => log(`动作异常：${e?.message ?? e}`))
       })
       child.on('error', (e) => log(`刷抖音起不来：${e?.message ?? e}`))
       // ⭐ 起不来/被杀掉也要把锁放开，否则之后每一轮都会被判成"上一轮还没结束" ✗
@@ -652,6 +662,7 @@ export function apply(ctx, config) {
    */
   const tick = () => {
     try {
+      if (homeMoving) return
       refreshCfg()
       const now = new Date()
       const st = readJson(stateFile, {})
@@ -701,6 +712,7 @@ export function apply(ctx, config) {
   try {
     const startupTimer = setTimeout(() => {
       try {
+        if (homeMoving) return
         refreshCfg()
         if (!cfg.onStart) return
         const st = readJson(stateFile, {})
@@ -738,7 +750,7 @@ export function apply(ctx, config) {
         schema: { type: 'json' },
         render: (_args, value) => [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }],
       },
-      async execute(args, exec) { return safe(await spec.execute(args, exec)) },
+      async execute(args, exec) { return withHome(async () => safe(await spec.execute(args, exec))) },
     }))
   }
 
@@ -830,6 +842,7 @@ export function apply(ctx, config) {
   const TOKEN_ROUTES = new Set([
     '/api/douyin-duty/config', '/api/douyin-duty/run', '/api/douyin-duty/login/start',
     '/api/douyin-duty/outbox/approve', '/api/douyin-duty/outbox/discard', '/api/douyin-duty/self/feedback',
+    '/api/douyin-duty/home',
   ])
   const apiGuard = (req, path) => {
     try {
@@ -912,6 +925,26 @@ export function apply(ctx, config) {
     // 设置页启动时先来拿 token（同源才给）
     if (req.method === 'GET' && path === '/api/douyin-duty/token') {
       return sendJson(res, 200, { ok: true, token: apiToken })
+    }
+
+    if (req.method === 'POST' && path === '/api/douyin-duty/home') {
+      const body = await readBody(req)
+      if (homeMoving || homeOperations || dutyChild) return sendJson(res, 409, { ok: false, error: '仍有值班、发送或其他操作在进行，请结束后再迁移' })
+      homeMoving = true
+      try {
+        const browser = session || new BrowserSession({ dir: stateDir })
+        if ((session?.proc && session.proc.exitCode === null && !session.proc.killed) || await browser.alive()) return sendJson(res, 409, { ok: false, error: '请先关闭抖音鱼的专用浏览器窗口，再迁移家目录' })
+        const result = await migrateHome({ defaultHome, from: stateDir, to: body.home, pluginDir })
+        stateDir = result.home
+        outDir = join(stateDir, 'out'); logFile = join(stateDir, 'duty.log'); cfgFile = join(stateDir, 'config.json')
+        stateFile = join(stateDir, 'state.json'); picksFile = join(stateDir, 'picks.json'); actedFile = join(stateDir, 'acted.json')
+        session = null; dy = null
+        refreshCfg()
+        log(`家目录已切换：${stateDir}；原目录保留：${result.previousHome}`)
+        return sendJson(res, 200, { ok: true, ...result })
+      } catch (e) {
+        return sendJson(res, 400, { ok: false, error: e.message })
+      } finally { homeMoving = false }
     }
 
     if (req.method === 'GET' && path === '/api/douyin-duty/config') {
@@ -1119,7 +1152,11 @@ export function apply(ctx, config) {
       kind: 'prefix',
       path: '/api/douyin-duty',
       handler: async (req, res) => {
-        try { await handle(req, res) } catch (e) { sendJson(res, 500, { ok: false, error: e?.message ?? String(e) }) }
+        try {
+          const path = new URL(req.url, 'http://127.0.0.1').pathname
+          if (path === '/api/douyin-duty/home') await handle(req, res)
+          else await withHome(() => handle(req, res))
+        } catch (e) { sendJson(res, homeMoving ? 409 : 500, { ok: false, error: e?.message ?? String(e) }) }
       },
     }), 'douyin-duty: /api/douyin-duty 路由')
   } catch (e) { log(`HTTP 路由没挂上：${e?.message ?? e}`) }

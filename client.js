@@ -32,7 +32,8 @@ window.__ModuleLoader__.load({
     const asJson = async (res) => {
       if (res.ok) return res.json()
       const why = res.status === 401 ? '（未登录 / 没权限）' : res.status === 403 ? '（被宿主拦了）' : ''
-      throw new Error('HTTP ' + res.status + why)
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || ('HTTP ' + res.status + why))
     }
     const jget = async (p) => asJson(await fetch(API + p, { credentials: 'same-origin' }))
     // ⭐ 加固后：改状态的 POST 必须带 x-douyin-token（同源 GET /token 换，缓存住）
@@ -186,6 +187,7 @@ window.__ModuleLoader__.load({
       const [entry, setEntry] = useState(null)
       const [feedback, setFeedback] = useState('')
       const [familyDraft, setFamilyDraft] = useState('')
+      const [homeDraft, setHomeDraft] = useState('')
       const [polling, setPolling] = useState(false)
       // ⭐ 文字类先攒着，点「保存改动」一起写（照 bili 的习惯）
       const [draft, setDraft] = useState({ kws: '', persona: '', urls: '' })
@@ -292,6 +294,17 @@ window.__ModuleLoader__.load({
       const onTest = async () => {
         setBusy('test'); setTest(null)
         try { setTest(await jget('/test')) } catch (e) { say('自检失败：' + e.message, 'err') } finally { setBusy('') }
+      }
+
+      const onMoveHome = async () => {
+        setBusy('home')
+        try {
+          const result = await jpost('/home', { home: homeDraft })
+          if (!result.ok) throw new Error(result.error || '家目录迁移失败')
+          setHomeDraft(''); setSelf(null); setFound([]); setEntry(null); setReport(null); setLogTail(null)
+          await load()
+          say(result.changed ? `已迁移到 ${result.home}；原目录保留为备份。` : '当前已经使用这个家目录。', 'ok')
+        } catch (e) { say(e.message, 'err') } finally { setBusy('') }
       }
 
       const onReport = async () => {
@@ -610,6 +623,9 @@ window.__ModuleLoader__.load({
         ]),
         h(Sec, { title: '它的地盘', key: 'home' }, [
           h('div', { 'data-dd-note': '', key: 'h1' }, `家目录：${st.home || ''}`),
+          h(Txt, { key: 'path', mono: true, value: homeDraft, placeholder: '例如 D:\\DouyinPet（完整路径）', onChange: setHomeDraft }),
+          h(Btn, { key: 'move', disabled: !!busy || polling || !homeDraft.trim(), onClick: onMoveHome }, busy === 'home' ? '正在迁移…' : '迁移家目录'),
+          h('div', { 'data-dd-note': '', key: 'move-note' }, '先结束值班并关闭专用浏览器，填一个空目录。会复制记忆、日记、配置和登录资料并立即切换；旧目录保留为备份，重启后继续使用新位置。'),
           h('div', { 'data-dd-note': '', key: 'h2' }, 'config.json（配置）/ duty.md（自定义章程）/ self/memory.sqlite（独立记忆与人格）/ picks.json / seen.json / out/ / frames/ / duty.log / browser/'),
           h('div', { 'data-dd-note': '', key: 'h3' }, '日志超过 2MB 会自动滚到 duty.log.1。'),
           h('div', { 'data-dd-row': '', key: 'h4' },
