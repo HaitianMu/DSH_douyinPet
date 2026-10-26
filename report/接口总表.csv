@@ -1,0 +1,649 @@
+﻿层,类型,名称/路径,参数/标识,说明,证据来源
+L2 远程,HTTP/WSS 域名,www.douyin.com,HTTPS,业务主站 / WebView 页面 + /aweme/v1/web/* API 主入口（dispatch host_group）,report/hosts.md
+L2 远程,HTTP/WSS 域名,www-m.douyin.com -> www-hj.douyin.com,HTTPS,TTNet dispatch：mobile-web 域名按 IDC 权重改写,report/hosts.md
+L2 远程,HTTP/WSS 域名,api.toutiaoapi.com,HTTPS,远程配置：/tfe/api/request_combine/v1、/service/settings/v3、/get_domains/v4,report/hosts.md
+L2 远程,HTTP/WSS 域名,imapi.douyin.com,HTTPS,IM 初始化：/v1/message/get_message_by_init,report/hosts.md
+L2 远程,HTTP/WSS 域名,frontier.snssdk.com,WSS,Frontier 长连接推送网关：/ws/v2（灰度 frontier-boe.bytedance.net）,report/hosts.md
+L2 远程,HTTP/WSS 域名,frontier-boe.bytedance.net,WSS,Frontier BOE 测试环境,report/hosts.md
+L2 远程,HTTP/WSS 域名,dig.bdurl.net,HTTPS/DNS,TTNet HTTPDNS 解析入口（net_dns_backup_map 固定 IP）,report/hosts.md
+L2 远程,HTTP/WSS 域名,tnc0-*/tnc3-*.zijieapi.com,HTTPS,TNC 下发 ttnet 配置,report/hosts.md
+L2 远程,HTTP/WSS 域名,mcs.zijieapi.com,HTTPS,mcs/tea 埋点上报（byteioAid=6383）；海外 maliva-mcs.byteoversea.com,report/hosts.md
+L2 远程,HTTP/WSS 域名,log.zijieapi.com / rtlog.zijieapi.com / log-klink.zijieapi.com / log.snssdk.com,HTTPS,applogrs.dll 日志上报域名,report/hosts.md
+L2 远程,HTTP/WSS 域名,crash.snssdk.com,HTTPS,网络诊断 netlog 上传（domainNetlog）,report/hosts.md
+L2 远程,HTTP/WSS 域名,pc-mon.zijieapi.com,HTTPS,PC 性能/监控上报,report/hosts.md
+L2 远程,HTTP/WSS 域名,scc.bytedance.com,HTTPS,URL 安全扫描：/scc_sdk/url_scan_v4?scc_mode=core&scc_from=TTWebview,report/hosts.md
+L2 远程,HTTP/WSS 域名,jsb.snssdk.com,HTTPS,JSBridge 鉴权/分组配置：/src/server/v2/package,report/hosts.md
+L2 远程,HTTP/WSS 域名,lf3-config.bytetcc.com,HTTPS,TCC 动态配置（容灾/降级）,report/hosts.md
+L2 远程,HTTP/WSS 域名,tosv.byted.org / tosv-boe.byted.org,HTTPS,Gecko 离线包：/obj/ies.fe.gecko/,report/hosts.md
+L2 远程,HTTP/WSS 域名,lf-douyin-pc-web.douyinstatic.com,HTTPS,electron-updater 更新源：/obj/douyin-pc-web/douyin-pc-client/releases/,report/hosts.md
+L2 远程,HTTP/WSS 域名,lf3-static.bytednsdoc.com,HTTPS,静态资源 CDN（许可图、引导图、字体）,report/hosts.md
+L2 远程,HTTP/WSS 域名,lf3-short.ibytedapm.com,HTTPS,Slardar 前端监控 SDK,report/hosts.md
+L2 远程,HTTP/WSS 域名,p3-pc.douyinpic.com / p3-pc-sign / p11.douyinpic.com,HTTPS,图片 CDN（签名 URL）,report/hosts.md
+L2 远程,HTTP/WSS 域名,p6-webcast-game-sign.byteimg.com,HTTPS,直播/游戏图片 CDN,report/hosts.md
+L2 远程,HTTP/WSS 域名,ecom.douyin.com,HTTPS,电商交易 H5（透传 aid=6383）,report/hosts.md
+L2 远程,HTTP/WSS 域名,webcast.amemv.com,HTTPS,直播 Web API 域名,report/hosts.md
+L2 远程,HTTP/WSS 域名,data.bytedance.net,HTTPS,埋点实时调试台（debugtool 页引用）,report/hosts.md
+L2 远程,HTTP/WSS 域名,tron/anniex/argus.bytedance.net,HTTPS,内网文档与框架主页（仅字符串引用，运行时不可达）,report/hosts.md
+L2 远程,远程配置 端点,GET api.toutiaoapi.com/tfe/api/request_combine/v1/?api_list=/service/settings/v3/,,aid=6383 / appSettingAppId=430651；响应 body.data.settings.douyin_web_pc,main.dll@162497561
+L2 远程,远程配置 端点,GET api.toutiaoapi.com/service/settings/v3/?app=1,,app guard 配置（430651/6383/appguard_version…）→ Download URL / MD5 / Args,douyin_guard.exe
+L2 远程,远程配置 端点,GET api.toutiaoapi.com/service/settings/v2/?app=1&caller_name=tt_webview,,TTWebView TNC 配置,main.dll@162630641
+L2 远程,远程配置 端点,GET api.toutiaoapi.com/get_domains/v4/,,域名列表下发,main.dll@185474545
+L2 远程,远程配置 端点,GET lf3-config.bytetcc.com/obj/tcc-config-web/tcc-v2-data-ies.auc.config-default,,TCC 容灾/降级配置（safe_urls、channel_whitelist）,security/constants.js:41
+L2 远程,远程配置 端点,GET jsb.snssdk.com/src/server/v2/package,,JSBridge 鉴权/方法分组包,security/constants.js:43
+L2 远程,网络 端点,TNC 下发 tnc0/tnc3-*.zijieapi.com,,server.json：send_tnc_host_arrays、ttnet_http_dns_addr、dispatch_actions,TTNetCache/server.json
+L2 远程,网络 端点,HTTPDNS dig.bdurl.net,,net_dns_backup_map → 101.36.166.16 / 101.36.166.19,%APPDATA%/douyin/native_config
+L2 远程,网络 端点,URL dispatch 规则（rule_id 350696 / service_name jump_east_path / sign 93fcfb3c…）,,按 host+path 前缀选路，含 /service/*/device_register*、/passport/*,pages/driverUpdater chunk
+L2 远程,日志 端点,POST mcs.zijieapi.com,,tea/mcs 埋点（byteioAid=6383，teaReportVersion=1.0.4）,shell_config.json / tt_electron_config.json
+L2 远程,日志 端点,log.zijieapi.com / rtlog.zijieapi.com / log-klink.zijieapi.com / log.snssdk.com,,applogrs.dll 日志通道（域名锁）,applogrs.dll@1231008
+L2 远程,监控 端点,pc-mon.zijieapi.com,,PC 性能监控上报,douyin_performance_service.dll
+L2 远程,监控 端点,lf3-short.ibytedapm.com/slardar/… (bid=electron_douyin_pc),,前端监控 Slardar,pages chunk
+L2 远程,崩溃 端点,crash.snssdk.com,,netlog 上传 + 崩溃上报（crashReporterAppId 330274222）,main.dll / douyin_doctor.exe
+L2 远程,推送 端点,WSS wss://frontier.snssdk.com/ws/v2,,长连接推送网关（BOE: frontier-boe.bytedance.net）,douyin_tray.exe
+L2 远程,推送 端点,GET imapi.douyin.com/v1/message/get_message_by_init,,IM 初始化,douyin_tray.exe
+L2 远程,推送 端点,"www.douyin.com/cloudpush/{app_notice_status,pull/psort/v2,update_token,update_sender,callback/client_*}",,推送拉取与回执,douyin_tray.exe / pc_push.dll
+L2 远程,更新 端点,https://lf-douyin-pc-web.douyinstatic.com/obj/douyin-pc-web/douyin-pc-client/releases/,,electron-updater generic feed（latest.yml/blockmap）,resources/app-update.yml
+L2 远程,安全 端点,GET scc.bytedance.com/scc_sdk/url_scan_v4?scc_mode=core&scc_from=TTWebview,,URL 安全扫描,main.dll
+L2 远程,离线包 端点,tosv.byted.org/obj/ies.fe.gecko/,,Gecko 离线包下发桶,douyin_tray.exe
+L1 业务 API,用户/关系,/aweme/v1/following/list/item/seen,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/watchlater/count,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/ab/params,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/activity/banner,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/activity/carnival/billboard,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/activity/carnival/main,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/activity/medal,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/activity/task,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/activity/yayun/match,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/ad/hotspot,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/ad/report,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/address/disable,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/address/getlist,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/address/save,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/admin/config,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,搜索/热点,/aweme/v1/web/api/suggest_words,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/app/installed,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/appoint/live/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/appoint/living/status,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/appoint/write,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/area/area/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/area/city/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/area/province/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/area/street/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/aweme/cancel/collect/multi,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/aweme/collect,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/aweme/delete/multi,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/aweme/detail,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/aweme/favorite,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/aweme/listcollection,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/aweme/post,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/aweme/stats,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/brand/ad/impression,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/cancel/item/digg/multi,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,搜索/热点,/aweme/v1/web/challenge/aweme,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,搜索/热点,/aweme/v1/web/challenge/detail,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,搜索/热点,/aweme/v1/web/challenge/search,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/channel/hotspot,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/client/monitor,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/web/collects/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/web/collects/maintain,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/web/collects/video/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/web/collects/video/move,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/college/entra,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/comment/delete,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/comment/digg,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/comment/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/comment/list/reply,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/comment/publish,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/commerce/challenge/aweme,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/commerce/order/getUserAuth,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/commerce/order/saveUserAuth,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/commit/dislike/item,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/commit/follow/request/approve,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/commit/follow/user,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/commit/item/digg,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,互动/评论,/aweme/v1/web/commit/user,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/content_pay/order/submit,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/creator/external/highlight,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,弹幕,/aweme/v1/web/danmaku/conf/get,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,弹幕,/aweme/v1/web/danmaku/conf/set,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,弹幕,/aweme/v1/web/danmaku/delete_v2,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,弹幕,/aweme/v1/web/danmaku/digg,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,弹幕,/aweme/v1/web/danmaku/get_v2,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,弹幕,/aweme/v1/web/danmaku/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,弹幕,/aweme/v1/web/danmaku/post_v2,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/dislike/dimension/update,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/order/confirm,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/order/confirm/edit,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/order/create,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/order/detail,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/order/pay/refresh,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/order/pay/status,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/pay/notice,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/product/detail/saas/pc,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/product/sku/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/warcraft/api/coupon/commit_follow,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/warcraft/api/coupon/couponlist/v2,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v1/web/ecom/warcraft/api/coupon/manualapply,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/emoji/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/external/notification,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/familiar/atlist,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/familiar/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/fancy/qrcode/info,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/follow/default,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/web/history/clear,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/web/history/read,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/web/history/write,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/homepage/impression,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,搜索/热点,/aweme/v1/web/hot/search/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,搜索/热点,/aweme/v1/web/hot/search/video/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/conversation/info/other,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/recent/sticker/fetch,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/recent/sticker/record,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/resource/emoticon/search,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/resource/list/aggregation,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/resource/sticker/collect,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/resources/emoticon/trending,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/spotlight/relation,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/strategy/config,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/user/active/config/get,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/user/active/status,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/user/active/update,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/user/friend/recommend,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/user/group/online,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,私信/IM,/aweme/v1/web/im/user/info,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/image/upload/token,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/locate/post,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/login/ad/free,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/long/video/detail,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/long/video/meta,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/lvideo/clear/history,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/lvideo/query/album/history,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/lvideo/query/history,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/lvideo/spring/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/lvideo/submit/history,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/lvideo/theater/banner,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/mix/aweme,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/mix/cancel/collect/multi,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/mix/collect,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/mix/detail,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/mix/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/mix/listcollection,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/mix/recommend,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/mix/watch/record,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/mobile/ab/params,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/multi/aweme/detail,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/multicast/query,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/multicast/record,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/music/aweme,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/music/collect,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/music/detail,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/music/listcollection,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/oasis/review,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/olympics/data,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/page/data,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/pendant/listByUser,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/pendant/sendToUser,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/pendant/updateStatus,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/privacy/batch_build_image,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/privacy/batch_convert_image,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/pull/notify,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/query/account/type,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/query/ip/location,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/query/user,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/recommend/user/dislike,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/related/recommend,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/remove/follower,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/report/submit,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/report/upload/auth,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,搜索/热点,/aweme/v1/web/search/sug,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/seo,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/series/aweme,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/series/cancel/collect/multi,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/series/card/feed,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/series/collect,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/series/collections,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/series/detail,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/series/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/series/watch/record,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/series/watched/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/show/episode/enter,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/show/episode/more_replay,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/show/episode/replay_list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,长视频/合集,/aweme/v1/web/show/search/replay_list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/social/count,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,运营/活动/音乐,/aweme/v1/web/summer/activity/receive,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/test/settings,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/topic/module/message/wall/publish,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/block,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/collect/count,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/dashboard,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/follower/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/following/author,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/following/category/count,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/following/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/paid_content/get,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/profile/other,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/profile/scene,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/recommend,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/set/settings,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,用户/关系,/aweme/v1/web/user/settings,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,壁纸/桌面,/aweme/v1/web/wallpaper/item,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/watched/anchors,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/web/watchlater/list,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,收藏/历史,/aweme/v1/web/watchlater/remove,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/web/binge/watch,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v1/web/write/impression,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v2/shop/promotion/pack,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,电商/支付,/aweme/v2/shop/promotion/pack/detail,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,视频/作品,/aweme/v2/web/aweme/stats,,基址 https://www.douyin.com,app.asar pages chunk
+L1 业务 API,通知/推送,/cloudpush/update_sender,,基址 https://www.douyin.com,app.asar pages chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,setDesktopSelfPageWidgetState,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,isDesktopSelfPageWidgetAutoAdd,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,canSetDesktopSelfPageWidget,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,hasSetDesktopSelfPageWidget,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,WINDOW_MOVE_TOP,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,WINDOW_CLOSE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,WINDOW_MAX,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,WINDOW_MIN,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,WINDOW_SHOW_ABOUT,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,WINDOW_IS_FULL,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,THEME_CHANGE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,WINDOW_SHOW_DEBUGTOOL,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,SWITCH_PROXY,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,GET_VERSION,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,GET_APP_VERSION,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,GET_PAGE_STORE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,UPLOAD_LOG,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,MAIN_WINDOW_MOVE_TOP,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,CAN_GO_BACK,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,GO_BACK,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,RELOAD,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,PAGE_READY,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,EXEC_BY_CLIENT,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,CLOSE_PARENT,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,SET_CLOSE_TO_TRAY,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,SET_MINIMIZE_TO_TRAY,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,GET_MINIMIZE_INFO,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 自启动/系统设置,SET_AUTO_START,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 自启动/系统设置,GET_AUTO_START,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,SET_ALWAYS_ON_TOP,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,IS_ALWAYS_ON_TOP,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,CHANGE_TO_SMALL_MODE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,CHANGE_TO_ORIGINAL_MODE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,REPORT_STAT,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,SYNC_LOGIN_STATE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,GET_CHANNEL_ID,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,GET_WID,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,GET_USER_UNIQUE_ID,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,GET_GUID,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,GET_APP_VERSION,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 调试,OPEN_DEV_TOOLS,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,CLEAR_COOKIE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,RELOAD_FROM_ID,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,GET_ALL_WINDOW_DATA,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 调试,GET_ALL_CLIENT_LOG,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,GET_ALL_STAT_INFO,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,CLEAR_STAT_INFO,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,GET_SETTINGS,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,GET_APP_CONFIG_ITEM,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,SET_APP_CONFIG_ITEM,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,IS_DEV,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,OPEN_WALLPAPER_WINDOW,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,SHOW_OPEN_DIALOG,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,DOWNLOAD_FILE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,WRITE_FILE_SYNC,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,USER_FILE_IS_EXIST,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,IS_ONLINE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,POST,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,GET,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,GET_ALL_DISPLAYS,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,GET_PRIMARY_DISPLAY,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,SET_FULL_SCREENABLE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,SET_FULL_SCREEN,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,IS_WINDOW_FULLSCREEN,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,REFRESH_WEBVIEW,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,NAVIGATION_GO_BACK,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,GET_BUILD_ID,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,SHOW_UPDATE_MODAL,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,GET_IS_UPDATE_PACKAGE_READY,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,GET_CLIENT_UPDATE_INFO,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,QUIT_UPDATE_TIP,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 身份/版本,GET_IS_MAS,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,GET_TRACK_STATE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,SET_TRACK_STATE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,GET_MEDIA_ACCESS_STATUS,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 安全/风控/媒体权限,ASK_FOR_MEDIA_ACCESS,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,CHANGE_THEME,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,DOWNLOAD_WALLPAPER,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,SET_STORE_ITEM,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,GET_STORE_ITEM,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,GET_VOLUME_BALANCE_CLOSE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,SET_VOLUME_BALANCE_CLOSE,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,MODIFY_REQUEST_HEADER,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,UPLOAD_PROXY_CONFIG,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,GET_IS_FRONT_SHOW,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,getWebAuthLocalStorage,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,setWebAuthLocalStorage,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getHardwareDecodeState,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,setHardwareDecodeState,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getDeviceInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getCsrInitialData,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getMetrics,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getAppMetrics,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getGPUFeatureStatus,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getGPUInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getSystemInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getVideoSideBarStatus,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,setVideoSideBarStatus,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getMemoryInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,printFirstFeedShow,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,isTopWebview,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,getWallpaperCardData,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,openWallpaperPreview,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,closeWallpaperPreview,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,readLocalWallpaperInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,wallpaperDelete,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,wallpaperPreviewConfirm,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,openSchema,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,openSiteInOuterBrowser,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,getPageStoreSync,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,readTrayLogConfig,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,writeTrayLogConfig,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,readTrayLogInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,openFolder,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,openBaseFolder,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,clearTrayLog,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getVolumeInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,mainWindowShowView,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,openInternalBrowser,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,getCacheSize,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,clearCache,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 安全/风控/媒体权限,guardSwitchChange,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 安全/风控/媒体权限,getGuardSwitch,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 调试,addDebugMenu,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 调试,removeDebugMenu,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,destroyRenderProcess,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,getSettingByKey,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,showErrorPage,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,getEnvHeader,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getMonitorInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getBatteryInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,openDriverCheckWindow,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,hideDriverCheckWindow,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,checkDriver,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,updateDriver,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,cancelUpdateDriver,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 杂项,appQuit,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 杂项,appRelaunch,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,downloadURL,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,showItemInFolder,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,getVideoDownloadPath,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,cancelVideoDownload,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,getWebId,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 杂项,relaunch,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,canSetDesktopWidget,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,isDesktopWidgetAutoStart,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,setDesktopWidgetState,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,isDesktopSearchWidgetAutoAdd,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,isDesktopWallpaperWidgetAutoAdd,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,setDesktopSearchWidgetState,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,getDesktopSearchWidgetInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,setDesktopWallpaperWidgetState,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,changeMiniWindowHideMode,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,isMiniWindowHideMode,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,isMiniWindowLoading,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,pipParentWinShow,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,mainViewMoveTopByBounds,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,setMinimumSizeInResize,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,setLandingMode,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,isWin7orOlder,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,switchToRecommend,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 安全/风控/媒体权限,setExtensionAssociation,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 安全/风控/媒体权限,isExtensionAssociation,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 安全/风控/媒体权限,resetExtensionAssociation,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,goToHelpPage,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,addWallpaperByCustom,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,internalBrowserBack,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,clearCacheAndReload,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 杂项,openIAP,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 杂项,getIAPProductPackage,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 杂项,isIapReady,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,setDesktopFollowWidgetState,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,isDesktopFollowWidgetAutoAdd,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,canSetDesktopFollowWidget,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,setDesktopMiniWindowWidgetState,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,isDesktopMiniWindowWidgetAutoAdd,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,canSetDesktopMiniWindowWidget,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getPerformanceInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,BROWSER_VIEW_READY,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,RSC_STREAM_CHUNK,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,PREFETCH_FALLBACK_SSR,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,moveAboveWidget,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,getInsertWallpaperList,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,setInsertWallpaperList,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,createMultitaskingWindow,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,getCookieChangeInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,getMultitaskingWindowCount,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,setRightClickWallpaperMenu,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,setCrashInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,getLynxInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,getIsLynxStart,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,closeLynxWindow,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,showWindowByWebWhenLynx,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 窗口/托盘,updateWinWithoutTransparent,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,setClientMMKV,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getAppInstallPath,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 导航/容器,gotoLandingPage,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,localStorage.setAll,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,localStorage.setItem,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,localStorage.getItem,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,localStorage.removeItem,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,sessionStorage.setAll,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,sessionStorage.setItem,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,sessionStorage.getItem,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,sessionStorage.removeItem,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,getPreloadNodeConfig,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 配置/存储/缓存,setPreloadNodeConfig,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 杂项,postMessage,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 设备/系统信息,getDeviceRegisterInfo,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 游戏小部件,createGameWindow,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 游戏小部件,getGameConfig,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 局域网,sendMulticastResult,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,parfaitLog,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,checkIsValidWallpaperFile,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,openMiniWindowFromGameDesktopWidget,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,getIsSupportGameWidget,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 桌面/壁纸/小组件,openGameDesktopWidget,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,cookies.getItem,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,cookies.registerCookieChange,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 网络/代理/请求头,cookies.unRegisterCookieChange,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 游戏小部件,destroyBigGameWindow,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 游戏小部件,createBigGameWindow,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,getDownloadFileIsExist,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,openDownloadFile,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,pauseDownloadFile,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,resumeDownloadFile,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 下载/文件,getDownloadFileStatus,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 杂项,bytebenchTrigger,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 安全/风控/媒体权限,resetBdTicketGuardSecureState,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 安全/风控/媒体权限,signWithCustomPayload,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生命令 更新/驱动/诊断,updateSafeMmkv,,ipcRenderer.invoke/send 通道；preload 暴露 __internal_invoke,pages/driverUpdater chunk
+L3 主进程,原生事件,THEME_CHANGE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,PAGE_STORE_CHANGE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,MESSAGE_FROM_MAIN_PROCESS,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,VIDEO_PLAYER_STATUS_CHANGE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,LOG_INFO_NOTIFY,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,WEB_CONTENTS_INSTANCE_CHANGE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,BURIED_INFO_NOTIFY,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,APP_CONFIG_CHANGE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,UPDATE_DOWNLOAD_SUCCESS,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,VIDEO_DECODE_CATON,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,ON_MAXIMIZE_CHANGE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,MAS_IAP_TRACE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,MAS_IAP_LOG,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,ON_TOP_CHANGE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,WALLPAPER_PREVIEW_CLOSE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,UPDATE_VOLUME_BALANCE_CLOSE,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,showLanMulticastPrompt,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,handleLanMulticast,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,showDouyinWindow,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,原生事件,postMessage,,main → renderer 事件,pages/driverUpdater chunk
+L3 主进程,Electron IPC,REPORT_STAT,renderer:invoke,,pages/player/index.720d2ebe7aef88f0.js
+L3 主进程,Electron IPC,WEBVIEW_GET_BRIDGE_CONFIG,"main:handle,renderer:send",,node_modules/@annie/electron/dist/es/main/scheme/window/annie-browser-window.js; node_modules/@annie/electron/dist/es/renderer/x-2-native-bridge.js; node_modules/@annie/electron/dist/lib/main/scheme/window/annie-browser-window.js; node_modules/@annie/electron/dist/lib/renderer/x-2-native-bridge.js; node_modules/@annie/electron/resources/preload.js; resources/app.asar.unpacked/preload.js
+L3 主进程,Electron IPC,WEBVIEW_GET_CURRENT_SCHEME,main:handle,,node_modules/@annie/electron/dist/es/main/scheme/window/annie-browser-window.js; node_modules/@annie/electron/dist/lib/main/scheme/window/annie-browser-window.js
+L3 主进程,Electron IPC,WEBVIEW_GET_GLOBAL_PROPS,"main:handle,renderer:send",,node_modules/@annie/electron/dist/es/main/scheme/window/annie-browser-window.js; node_modules/@annie/electron/dist/es/renderer/index.js; node_modules/@annie/electron/dist/lib/main/scheme/window/annie-browser-window.js; node_modules/@annie/electron/dist/lib/renderer/index.js; node_modules/@annie/electron/resources/preload.js; resources/app.asar.unpacked/preload.js
+L3 主进程,Electron IPC,WEBVIEW_UPDATE_CURRENT_SCHEME,main:handle,,node_modules/@annie/electron/dist/es/main/scheme/window/annie-browser-window.js; node_modules/@annie/electron/dist/lib/main/scheme/window/annie-browser-window.js
+L3 主进程,Electron IPC,cancel-to-update,renderer:send,,pages/update2/index.4a71484ba8389184.js
+L3 主进程,Electron IPC,close,renderer:send,,pages/player/index.720d2ebe7aef88f0.js
+L3 主进程,Electron IPC,confirm-to-update,renderer:send,,pages/update2/index.4a71484ba8389184.js
+L3 主进程,Electron IPC,decode-complete,"main:handle,renderer:send",,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/hardwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/softwareDecode.js
+L3 主进程,Electron IPC,decode-error,"main:handle,renderer:send",,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/hardwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/softwareDecode.js
+L3 主进程,Electron IPC,decode-stats,"main:handle,renderer:send",,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/hardwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/softwareDecode.js
+L3 主进程,Electron IPC,encode-complete,"main:handle,renderer:send",,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/softwareEncode.js
+L3 主进程,Electron IPC,encode-error,"main:handle,renderer:send",,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/softwareEncode.js
+L3 主进程,Electron IPC,maximize,"renderer:on,renderer:send",,pages/player/index.720d2ebe7aef88f0.js
+L3 主进程,Electron IPC,minimize,renderer:send,,pages/player/index.720d2ebe7aef88f0.js
+L3 主进程,Electron IPC,openFolder,renderer:invoke,,pages/player/index.720d2ebe7aef88f0.js
+L3 主进程,Electron IPC,pin,renderer:send,,pages/player/index.720d2ebe7aef88f0.js
+L3 主进程,Electron IPC,pre-decode-complete,"main:handle,renderer:send",,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/softwareEncode.js
+L3 主进程,Electron IPC,pre-decode-error,"main:handle,renderer:send",,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/softwareEncode.js
+L3 主进程,Electron IPC,quit-and-install-update,renderer:send,,pages/update2/index.4a71484ba8389184.js
+L3 主进程,Electron IPC,start-decode,renderer:on,,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareDecode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareDecode.js
+L3 主进程,Electron IPC,start-encode,renderer:on,,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareEncode.js
+L3 主进程,Electron IPC,start-pre-decode,renderer:on,,resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/hardwareEncode.js; resources/app.asar.unpacked/node_modules/@bytebench/foundation/dist/renderer/softwareEncode.js
+L3 主进程,Electron IPC,switchToRecommend,renderer:invoke,,pages/player/index.720d2ebe7aef88f0.js
+L3 主进程,Electron IPC,unmaximize,renderer:on,,pages/player/index.720d2ebe7aef88f0.js
+L3 主进程,Electron IPC,update-download-error,renderer:on,,pages/update2/index.4a71484ba8389184.js
+L3 主进程,Electron IPC,update-download-progress,renderer:on,,pages/update2/index.4a71484ba8389184.js
+L3 主进程,Electron IPC,update-download-start,renderer:on,,pages/update2/index.4a71484ba8389184.js
+L3 主进程,Electron IPC,update-download-success,renderer:on,,pages/update2/index.4a71484ba8389184.js
+L3 主进程,Electron IPC,updatePlayStatus,renderer:on,,pages/player/index.720d2ebe7aef88f0.js
+L3 主进程,IPC 常量,BRIDGE_CONTEXT_CALLBACK_EVENT,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,BRIDGE_CONTEXT_SEND_JS_EVENT,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,BRIDGE_MAIN_RECEIVE_EVENT,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,BRIDGE_RECEIVE_RENDERER_JSB_REGISTER,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,BRIDGE_RECEIVE_RENDERER_JSB_UNREGISTER,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,MAIN_CALL_RENDERER_METHOD,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,MAIN_CALL_RENDERER_METHOD_CALLBACK,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,EVENTCENTER_MAIN_RECEIVE_EVENT,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,BRIDGE_MAIN_RECORD_CONTAINER,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,GET_CANS_MAIN_SETTING,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,CANS_OPEN_H5_DEVTOOL,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L3 主进程,IPC 常量,EVENTCENTER_MAIN_TRIGGER_EVENT,,IPC_EVENTS 常量（anniex 容器）,@annie/electron common/constanst.js
+L4 JSBridge,iesbridge(IES),apiParam,,access=PUBLIC,iesbridge/ApiParamMethod.js
+L4 JSBridge,iesbridge(IES),appInfo,,access=PUBLIC,iesbridge/AppInfoMethod.js
+L4 JSBridge,iesbridge(IES),canIUse,method,access=PUBLIC,iesbridge/CanIUseMethod.js
+L4 JSBridge,iesbridge(IES),close,,access=PUBLIC,iesbridge/CloseMethod.js
+L4 JSBridge,iesbridge(IES),closeSocket,"containerID,socketTaskID",access=PUBLIC,iesbridge/CloseSocketMethod.js
+L4 JSBridge,iesbridge(IES),connectSocket,"callback,header,url",access=PUBLIC,iesbridge/ConnectSocketMethod.js
+L4 JSBridge,iesbridge(IES),fetch,"addCommonParams,data,headers,method,params,url",access=PUBLIC,iesbridge/FetchMethod.js
+L4 JSBridge,iesbridge(IES),getStorage,"key,type",access=PUBLIC,iesbridge/GetStorageMethod.js
+L4 JSBridge,internal,internal.getEnvData,,access=PUBLIC,internal-bridge/get-env-data.js
+L4 JSBridge,internal,internal.getGlobalProps,scheme,access=PUBLIC,internal-bridge/get-global-props.js
+L4 JSBridge,iesbridge(IES),removeStorage,"key,type",access=PUBLIC,iesbridge/RemoveStorageMethod.js
+L4 JSBridge,iesbridge(IES),sendSocketData,,access=PUBLIC,iesbridge/SendSocketDataMethod.js
+L4 JSBridge,iesbridge(IES),setStorage,"data,key,value",access=PUBLIC,iesbridge/SetStorageMethod.js
+L4 JSBridge,iesbridge(IES),showToast,,access=PUBLIC,iesbridge/ShowToastMethod.js
+L4 JSBridge,iesbridge(IES),userInfo,,access=PUBLIC,iesbridge/UserInfoMethod.js
+L4 JSBridge,xbridge(anniex),x.canIUse,method,access=PUBLIC,xbridge/XCanIUseMethod.js
+L4 JSBridge,xbridge(anniex),x.chooseMedia,maxCount,access=PUBLIC,xbridge/XChooseMediaMethod.js
+L4 JSBridge,xbridge(anniex),x.close,"containerID,containerIDs",access=PUBLIC,xbridge/XCloseMethod.js
+L4 JSBridge,xbridge(anniex),x.closeSocket,"containerID,socketTaskID",access=PUBLIC,xbridge/XCloseSocketMethod.js
+L4 JSBridge,xbridge(anniex),x.connectSocket,"callback,header,url",access=PUBLIC,xbridge/XConnectSocketMethod.js
+L4 JSBridge,xbridge(anniex),x.copy,content,access=PUBLIC,xbridge/xCopyMethod.js
+L4 JSBridge,xbridge(anniex),x.downloadFile,"extension,header,params,url",access=PUBLIC,xbridge/XDownloadFile.js
+L4 JSBridge,xbridge(anniex),x.getAllJSB,,access=PUBLIC,xbridge/XGetAllJSBMethod.js
+L4 JSBridge,xbridge(anniex),x.getAPIParams,,access=PUBLIC,xbridge/XGetAPIParams.js
+L4 JSBridge,xbridge(anniex),x.getAppInfo,,access=PUBLIC,xbridge/XGetAppInfoMethod.js
+L4 JSBridge,xbridge(anniex),x.getClipboardData,,access=PUBLIC,xbridge/XGetClipboardDataMethod.js
+L4 JSBridge,xbridge(anniex),x.getContainerID,,access=PUBLIC,xbridge/XGetContainerIDMethod.js
+L4 JSBridge,xbridge(anniex),x.getDebugInfo,,access=PUBLIC,xbridge/XGetDebugInfo.js
+L4 JSBridge,xbridge(anniex),x.getDeviceStat,"cpuUsage,memoryAll,memoryRest,memoryUse",access=PUBLIC,xbridge/XGetDeviceStats.js
+L4 JSBridge,xbridge(anniex),x.getLocation,,access=PUBLIC,xbridge/XGetLocationMethod.js
+L4 JSBridge,xbridge(anniex),x.getMethodList,,access=PUBLIC,xbridge/XGetMethodListMethod.js
+L4 JSBridge,xbridge(anniex),x.getPreRenderList,,access=PUBLIC,xbridge/XGetPreRenderList.js
+L4 JSBridge,xbridge(anniex),x.getPreRenderStatus,,access=PUBLIC,xbridge/XGetPreRenderStatus.js
+L4 JSBridge,xbridge(anniex),x.getStorageInfo,biz,access=PUBLIC,xbridge/XGetStorageInfoMethod.js
+L4 JSBridge,xbridge(anniex),x.getStorageItem,"biz,key",access=PUBLIC,xbridge/XGetStorageItemMethod.js
+L4 JSBridge,xbridge(anniex),x.getUserDomainStorageItem,key,access=PUBLIC,xbridge/XGetUserDomainStorageItemMethod.js
+L4 JSBridge,xbridge(anniex),x.getUserInfo,,access=PUBLIC,xbridge/XGetUserInfoMethod.js
+L4 JSBridge,xbridge(anniex),x.isPreRender,,access=PUBLIC,xbridge/XIsPreRender.js
+L4 JSBridge,xbridge(anniex),x.login,,access=PUBLIC,xbridge/XLoginMethod.js
+L4 JSBridge,xbridge(anniex),x.logout,,access=PUBLIC,xbridge/XLogoutMethod.js
+L4 JSBridge,xbridge(anniex),x.open,schema,access=PUBLIC,xbridge/XOpenMethod.js
+L4 JSBridge,xbridge(anniex),x.preRender,,access=PUBLIC,xbridge/XPreRender.js
+L4 JSBridge,xbridge(anniex),x.publishEvent,"eventName,params,timestamp",access=PUBLIC,xbridge/XPublishEventMethod.js
+L4 JSBridge,xbridge(anniex),x.removeStorageItem,"biz,key",access=PUBLIC,xbridge/XRemoveStorageItemMethod.js
+L4 JSBridge,xbridge(anniex),x.removeUserDomainStorageItem,"data,expiredTime,key",access=PUBLIC,xbridge/XRemoveUserDomainStorageItemMethod.js
+L4 JSBridge,xbridge(anniex),x.request,"addCommonParams,header,params,prefetchKey",access=PUBLIC,xbridge/XRequest.js
+L4 JSBridge,xbridge(anniex),x.saveDataURL,"dataURL,extension,filename,saveToAlbum",access=PUBLIC,xbridge/XSaveDataURLMethod.js
+L4 JSBridge,xbridge(anniex),x.sendSocketData,,access=PUBLIC,xbridge/XSendSocketDataMethod.js
+L4 JSBridge,xbridge(anniex),x.setStorageItem,"biz,data,key",access=PUBLIC,xbridge/XSetStorageItemMethod.js
+L4 JSBridge,xbridge(anniex),x.setUserDomainStorageItem,"data,expiredTime,key",access=PUBLIC,xbridge/XSetUserDomainStorageItemMethod.js
+L4 JSBridge,xbridge(anniex),x.showModal,,access=PUBLIC,xbridge/XShowModalMethod.js
+L4 JSBridge,xbridge(anniex),x.showToast,,access=PUBLIC,xbridge/XShowToastMethod.js
+L4 JSBridge,xbridge(anniex),x.startGyroscope,,access=PUBLIC,xbridge/XStartGyroscopeMethod.js
+L4 JSBridge,xbridge(anniex),x.stopGyroscope,,access=PUBLIC,xbridge/XStopGyroscopeMethod.js
+L4 JSBridge,xbridge(anniex),x.subscribeEvent,"eventName,timestamp",access=PUBLIC,xbridge/XSubscribeEventMethod.js
+L4 JSBridge,xbridge(anniex),x.unsubscribeEvent,eventName,access=PUBLIC,xbridge/XUnsubscribeEventMethod.js
+L4 JSBridge,xbridge(anniex),x.uploadFile,"addCommonParams,filePath,header,needCommonParams,params,shouldUploadRawFile,timeoutInterval,url",access=PUBLIC,xbridge/XUploadFileMethod.js
+L5 系统,自定义协议,sslocal://webview?url=,,内部路由：打开 WebView 容器,common/constanst.js + tray
+L5 系统,自定义协议,sslocal://webview_popup?url=,,弹窗 WebView,common/constanst.js + tray
+L5 系统,自定义协议,sslocal://lynxview?url=|channel=&bundle=,,打开 Lynx 容器（Gecko 离线包）,common/constanst.js + tray
+L5 系统,自定义协议,sslocal://lynxview_popup?...,,弹窗 Lynx 容器,common/constanst.js + tray
+L5 系统,自定义协议,sslocal://webcast_webview?url=,,直播 WebView 容器,common/constanst.js + tray
+L5 系统,自定义协议,sslocal://webcast_lynxview?url=,,直播 Lynx 容器,common/constanst.js + tray
+L5 系统,自定义协议,"sslocal://activity/{live,aweme,h5}?...",,tray 推送落地路由,common/constanst.js + tray
+L5 系统,自定义协议,sslocal://webcast_room?web_rid=&enter_method=,,直接进直播间,common/constanst.js + tray
+L5 系统,自定义协议,sslocal://chat/center?conv_short_id=&conversation_id=,,打开私信会话,common/constanst.js + tray
+L5 系统,自定义协议,sslocal://notice_list | sslocal://notification,,通知中心,common/constanst.js + tray
+L5 系统,自定义协议,bytedance:// | nativeapp:// | bds://,,JSBridge iframe 回调 scheme（页面侧）,common/constanst.js + tray
+L5 系统,自定义协议,aweme://,,壁纸/本地视频资源引用前缀,common/constanst.js + tray
+L5 系统,命令行参数,--window-name=,,MAIN_WINDOW/SUB_WINDOW/LIVE_WINDOW/MULTI_WINDOW,preload.js / launch_info
+L5 系统,命令行参数,--webview-id=,,绑定 webview,preload.js / launch_info
+L5 系统,命令行参数,--container-id=,,绑定容器,preload.js / launch_info
+L5 系统,命令行参数,--global-props=,,注入全局属性,preload.js / launch_info
+L5 系统,命令行参数,--bridge-config=,,注入桥配置,preload.js / launch_info
+L5 系统,命令行参数,--isOpenContextIsolation=,,上下文隔离开关,preload.js / launch_info
+L5 系统,命令行参数,--multi_window_info=,,多窗口排序 JSON,preload.js / launch_info
+L5 系统,命令行参数,--getAppUserDataPath=,,覆盖 userData 路径,preload.js / launch_info
+L5 系统,命令行参数,--driver_update,,驱动更新模式,preload.js / launch_info
+L5 系统,命令行参数,-type= / --start_type=,,启动类型（installer 等）,preload.js / launch_info
+L5 系统,COM 提权服务,DouyinElevationService,{021126DF-2B48-41A7-8615-1ECB923010A8} / {022AB1B0-7ED5-42AC-84AF-6D927F504381},reg SOFTWARE\ByteDance\douyin；verify_caller_cert+path,main.dll @198404740
+L5 系统,COM 提权服务,AppShellElevationService,{63C34537-A073-440B-A889-8BFDCCE724F3} / {9610CC02-0135-4554-BBA1-BA39A5673F4D},reg SOFTWARE\ByteDance\AppShell,app_shell_updater.exe / douyin_doctor.exe
+L3 主进程,应用配置键,MiddleWareConfig,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,siteConf,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,routerFilterList,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,gameList,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,JSBMethodGroupMap,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,JSBSecurityStrategyContent,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,v8_max_old_space_size_mb,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,energyEfficientConfig,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,notifyMenu,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,htmlRetryFilterUrls,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,wallpaperConfig,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,enableDebugger,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,powerReportConfig,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,aboutInfo,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,driverUpdateConfig,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,renderTimeoutReload,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,checkBlackScreen,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,enableCertificateVerify,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,enableCertificateVerifyHostList,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,closeRightClickWallpaperMenu,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,annieJSBConfig,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,enableAppGuard,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,enableAppDoctor,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,ttnetConfig,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,libraConfig,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,lanMulticast,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,honorHandover,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L3 主进程,应用配置键,bdTicketConfig,,ConfigKey 枚举（config 下发/读写）,pages/driverUpdater chunk
+L5 系统,本地数据契约,%APPDATA%\douyin\douyin_app_config,,SQLite app_config：TipsFrequencyControl / PushWnsChannelToken,本机取证
+L5 系统,本地数据契约,%APPDATA%\douyin\tt_Cookies,,SQLite cookies（Chromium 结构）,本机取证
+L5 系统,本地数据契约,%APPDATA%\douyin\native_config,,TTNet / HTTPDNS 参数,本机取证
+L5 系统,本地数据契约,"%APPDATA%\douyin\TTNetCache\{server.json,tt_net_config.config,dig.bdurl.net_443}",,TNC / DNS 缓存,本机取证
+L5 系统,本地数据契约,%APPDATA%\douyin\tray_setting.json,,远程配置真实响应,本机取证
+L5 系统,本地数据契约,%APPDATA%\douyin\launch_info\*.json,,启动链路埋点（含真实 cmdline）,本机取证
+L5 系统,本地数据契约,HKCU\Software\ByteDance\douyin,,wid / installerFile,本机取证
+L5 系统,本地数据契约,安装目录\md5.json,,全量文件 MD5 清单,本机取证
+L5 系统,本地数据契约,安装目录\launcher_config.json,,版本指针,本机取证
